@@ -1,5 +1,5 @@
 // ============================================================
-// student.js — Página pública dos formandos
+// student.js — Lógica Oficial Editorial / Fullscreen
 // ============================================================
 
 const TURMA_A = [
@@ -34,399 +34,487 @@ const TURMA_B = [
     "Samyra Cavalcanti do Nascimento Melo","Thayse Milena Santana de Oliveira"
 ];
 
-// Estado
-const State = {
-    turma: null,
-    student: null,
+const AppState = {
+    selectedTurma: null,
+    currentStudent: null,
     formandos: [],
-    loaded: false,
 
-    async load() {
+    async init() {
+        await this.loadData();
+        this.renderStats();
+    },
+
+    async loadData() {
         try {
-            let res = await fetch('/api/formandos');
-            if (!res.ok) res = await fetch('data/formandos.json');
+            // Adiciona timestamp para não pegar cache do navegador
+            const res = await fetch(`/api/formandos?t=${Date.now()}`);
             if (res.ok) {
                 const data = await res.json();
                 if (Array.isArray(data) && data.length > 0) {
                     this.formandos = data;
-                    this.loaded = true;
                     return;
                 }
             }
-        } catch(e) {
-            console.warn('Servidor offline, usando localStorage');
+        } catch (e) {
+            console.warn("API offline, carregando fallback estático...");
         }
-        // fallback localStorage
+
         try {
-            const stored = localStorage.getItem('formando_musix_data_v2');
-            if (stored) {
-                this.formandos = JSON.parse(stored);
-                this.loaded = true;
+            const resStatic = await fetch(`data/formandos.json?t=${Date.now()}`);
+            if (resStatic.ok) {
+                const data = await resStatic.json();
+                this.formandos = data;
             }
-        } catch(e) {}
+        } catch (e) {}
     },
 
-    getByName(name) {
-        const norm = n => n.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-        return this.formandos.find(f => norm(f.name) === norm(name)) || null;
+    normalize(str) {
+        return (str || '')
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .toLowerCase()
+            .trim();
     },
 
-    getByTurma(turma) {
-        return this.formandos.filter(f => f.turma === turma);
+    getStudentsOfTurma(turma) {
+        const norm = this.normalize;
+        const validList = turma === 'A' ? TURMA_A : TURMA_B;
+
+        return validList.map(name => {
+            const existing = this.formandos.find(f => norm(f.name) === norm(name) && f.turma === turma);
+            if (existing) return existing;
+            return {
+                id: `seed_${turma}_${norm(name).replace(/\s+/g, '_')}`,
+                name: name,
+                turma: turma,
+                musicTitle: '',
+                musicArtist: '',
+                musicLink: '',
+                snippetStart: '',
+                snippetEnd: '',
+                status: 'PENDENTE'
+            };
+        });
     },
 
-    async saveSuggestion(id, fields) {
-        const idx = this.formandos.findIndex(f => f.id === id);
-        if (idx === -1) return false;
-        this.formandos[idx] = { ...this.formandos[idx], ...fields };
+    async saveStudent(studentData) {
+        const norm = this.normalize;
+        const idx = this.formandos.findIndex(f => norm(f.name) === norm(studentData.name) && f.turma === studentData.turma);
 
-        // Salvar no servidor
+        if (idx !== -1) {
+            this.formandos[idx] = { ...this.formandos[idx], ...studentData };
+        } else {
+            this.formandos.push(studentData);
+        }
+
+        // Tenta salvar via POST no servidor
         try {
             const res = await fetch('/api/formandos', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(this.formandos)
             });
-            if (res.ok) {
-                localStorage.setItem('formando_musix_data_v2', JSON.stringify(this.formandos));
-                return true;
-            }
-        } catch(e) {}
-        // Fallback: só salva localmente
+            if (res.ok) return true;
+        } catch (e) {}
+
+        // Salva no LocalStorage como redundância
         localStorage.setItem('formando_musix_data_v2', JSON.stringify(this.formandos));
         return true;
     }
 };
 
-// Utilitários
+// ==============================================================
+// HELPERS
+// ==============================================================
+function getInitials(name) {
+    if (!name) return 'FM';
+    const parts = name.trim().split(' ').filter(Boolean);
+    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 function getYouTubeId(url) {
     if (!url) return null;
     url = url.trim();
     if (url.length === 11 && !url.includes('/') && !url.includes('.')) return url;
-    const m = url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/);
-    return (m && m[2].length === 11) ? m[2] : null;
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
 }
 
-function getInitials(name) {
-    if (!name) return '?';
-    const parts = name.trim().split(' ');
-    if (parts.length === 1) return parts[0][0].toUpperCase();
-    return (parts[0][0] + parts[parts.length-1][0]).toUpperCase();
+function showToast(msg) {
+    const t = document.getElementById('toastMessage');
+    const txt = document.getElementById('toastText');
+    if (!t || !txt) return;
+    txt.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => {
+        t.classList.remove('show');
+    }, 3500);
 }
 
-function showToast(msg, type = 'success') {
-    const toast = document.getElementById('toast');
-    document.getElementById('toastText').textContent = msg;
-    toast.style.borderColor = type === 'error' ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)';
-    toast.style.color = type === 'error' ? '#F87171' : '#34D399';
-    toast.classList.add('show');
-    setTimeout(() => toast.classList.remove('show'), 3000);
+// ==============================================================
+// NAVEGAÇÃO ENTRE ETAPAS
+// ==============================================================
+function switchStage(stageName) {
+    document.querySelectorAll('.stage-section').forEach(s => s.classList.remove('active'));
+
+    if (stageName === 'turma') {
+        document.getElementById('stepTurma').classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else if (stageName === 'list') {
+        document.getElementById('stepList').classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
 }
 
-// Navegação entre telas
-function showScreen(id) {
-    document.querySelectorAll('.screen').forEach(s => {
-        s.classList.remove('active', 'slide-left');
-    });
-    const target = document.getElementById(id);
-    if (target) target.classList.add('active');
-}
+// ==============================================================
+// RENDERIZAÇÃO DA TABELA / LISTA DE ALUNOS
+// ==============================================================
+function renderStudentsList(query = '') {
+    const listEl = document.getElementById('studentsScrollList');
+    if (!listEl) return;
 
-function slideLeft(fromId, toId) {
-    const from = document.getElementById(fromId);
-    const to = document.getElementById(toId);
-    if (from) { from.classList.remove('active'); from.classList.add('slide-left'); }
-    if (to) { to.classList.add('active'); }
-}
+    const turma = AppState.selectedTurma;
+    let students = AppState.getStudentsOfTurma(turma);
 
-// ===================== TELA 1: TURMA =====================
+    if (query.trim()) {
+        const qNorm = AppState.normalize(query);
+        students = students.filter(s => 
+            AppState.normalize(s.name).includes(qNorm) || 
+            AppState.normalize(s.musicTitle || '').includes(qNorm) ||
+            AppState.normalize(s.musicArtist || '').includes(qNorm)
+        );
+    }
 
-function initTurmaScreen() {
-    document.querySelectorAll('.turma-pick-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const turma = btn.dataset.turma;
-            State.turma = turma;
-            initSearchScreen(turma);
-            slideLeft('screenTurma', 'screenSearch');
-        });
-    });
-}
+    // Atualiza Sidebar Stats
+    const total = students.length;
+    const aprovadas = students.filter(s => s.status === 'APROVADO').length;
+    const pendentes = students.filter(s => !s.status || s.status === 'PENDENTE').length;
 
-// ===================== TELA 2: BUSCA =====================
+    document.getElementById('sideStatTotal').textContent = total;
+    document.getElementById('sideStatAprovados').textContent = aprovadas;
+    document.getElementById('sideStatPendentes').textContent = pendentes;
 
-function initSearchScreen(turma) {
-    // Atualiza pill
-    const pill = document.getElementById('turmaPill');
-    pill.textContent = `3º Ano ${turma}`;
-    pill.className = `turma-pill ${turma}`;
-
-    // Carrega lista
-    renderStudentList('');
-
-    // Busca ao digitar
-    const input = document.getElementById('studentSearchInput');
-    const clearBtn = document.getElementById('clearSearchBtn');
-    input.value = '';
-    input.focus();
-
-    input.oninput = () => {
-        clearBtn.style.display = input.value ? '' : 'none';
-        renderStudentList(input.value);
-    };
-
-    clearBtn.onclick = () => {
-        input.value = '';
-        clearBtn.style.display = 'none';
-        renderStudentList('');
-        input.focus();
-    };
-}
-
-function renderStudentList(query) {
-    const list = document.getElementById('studentsList');
-    const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const q = norm(query.trim());
-
-    // Nomes da turma
-    const names = State.turma === 'A' ? TURMA_A : TURMA_B;
-    const filtered = q ? names.filter(n => norm(n).includes(q)) : names;
-
-    if (filtered.length === 0) {
-        list.innerHTML = `
-            <div class="search-empty">
-                <div class="search-empty-icon">🔍</div>
-                <p>Nenhum formando encontrado para "<strong>${query}</strong>"</p>
-            </div>`;
+    if (students.length === 0) {
+        listEl.innerHTML = `
+            <div style="padding: 60px 20px; text-align: center; color: var(--text-muted); font-family: var(--font-space);">
+                <div style="font-size: 2.5rem; margin-bottom: 12px;">🔍</div>
+                <h3>Nenhum formando encontrado</h3>
+                <p style="margin-top: 6px; font-size: 0.9rem;">Verifique a grafia do nome digitado.</p>
+            </div>
+        `;
         return;
     }
 
-    list.innerHTML = filtered.map(name => {
-        const f = State.formandos.find(f2 => norm(f2.name) === norm(name)) || { status: 'PENDENTE', musicTitle: '', musicArtist: '' };
-        const music = f.musicTitle ? `🎵 ${f.musicTitle}${f.musicArtist ? ' — ' + f.musicArtist : ''}` : 'Sem música escolhida';
+    listEl.innerHTML = students.map(s => {
+        const initials = getInitials(s.name);
+        const hasSong = Boolean(s.musicTitle && s.musicTitle.trim());
+        const status = s.status || 'PENDENTE';
+        
+        const statusLabels = {
+            'PENDENTE': 'PENDENTE',
+            'ESCOLHIDO': 'AGUARDANDO',
+            'APROVADO': 'APROVADO'
+        };
+
         return `
-            <button class="student-item" data-name="${escapeHtml(name)}">
-                <div class="student-avatar">${getInitials(name)}</div>
-                <div class="student-info">
-                    <div class="student-name">${highlightMatch(name, query)}</div>
-                    <div class="student-music">${escapeHtml(music)}</div>
+            <div class="student-row-card" data-student-name="${encodeURIComponent(s.name)}">
+                <div class="student-cell-name">
+                    <div class="student-initials">${initials}</div>
+                    <div class="student-full-name">${s.name}</div>
                 </div>
-                <div class="student-status-dot ${f.status || 'PENDENTE'}"></div>
-            </button>`;
+
+                <div class="student-cell-song">
+                    ${hasSong ? `
+                        <div class="song-main-txt">
+                            <span>🎵</span>
+                            <span>${s.musicTitle}</span>
+                        </div>
+                        <div class="song-artist-txt">${s.musicArtist || 'Artista não informado'}</div>
+                    ` : `
+                        <span class="song-empty-txt">Nenhuma música escolhida</span>
+                    `}
+                </div>
+
+                <div class="student-cell-status">
+                    <span class="status-pill-badge ${status}">
+                        <span class="badge-dot"></span>
+                        <span>${statusLabels[status] || status}</span>
+                    </span>
+                </div>
+
+                <div class="student-cell-action">
+                    <button class="btn-open-detail">
+                        ${hasSong ? 'VER DETALHES ↗' : 'ESCOLHER MÚSICA ↗'}
+                    </button>
+                </div>
+            </div>
+        `;
     }).join('');
 
-    list.querySelectorAll('.student-item').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const name = btn.dataset.name;
-            openStudentProfile(name);
+    // Adiciona listener para abrir drawer
+    listEl.querySelectorAll('.student-row-card').forEach(card => {
+        card.addEventListener('click', () => {
+            const name = decodeURIComponent(card.dataset.studentName);
+            const student = students.find(s => s.name === name);
+            if (student) openStudentDrawer(student);
         });
     });
 }
 
-function highlightMatch(text, query) {
-    if (!query) return escapeHtml(text);
-    const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const idx = norm(text).indexOf(norm(query));
-    if (idx === -1) return escapeHtml(text);
-    return escapeHtml(text.substring(0, idx))
-        + `<mark style="background:rgba(59,130,246,0.25);color:inherit;border-radius:2px;">${escapeHtml(text.substring(idx, idx+query.length))}</mark>`
-        + escapeHtml(text.substring(idx + query.length));
-}
+// ==============================================================
+// GESTÃO DO DRAWER / MODAL
+// ==============================================================
+function openStudentDrawer(student) {
+    AppState.currentStudent = student;
 
-function escapeHtml(str) {
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+    // Atualiza cabeçalho do drawer
+    document.getElementById('drawerAvatar').textContent = getInitials(student.name);
+    document.getElementById('drawerUserName').textContent = student.name;
+    document.getElementById('drawerTurmaBadge').textContent = `3º ANO ${student.turma}`;
 
-// ===================== TELA 3: PERFIL =====================
+    // Atualiza status banner
+    const status = student.status || 'PENDENTE';
+    const statusDot = document.querySelector('.status-indicator-dot');
+    const statusHeading = document.getElementById('drawerStatusTitle');
+    const statusSub = document.getElementById('drawerStatusSub');
+    const statusPill = document.getElementById('drawerStatusPill');
 
-function openStudentProfile(name) {
-    const norm = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const f = State.formandos.find(f2 => norm(f2.name) === norm(name)) || {
-        name, turma: State.turma, status: 'PENDENTE',
-        musicTitle: '', musicArtist: '', musicLink: '', snippetStart: '', snippetEnd: ''
-    };
-    State.student = f;
+    if (status === 'APROVADO') {
+        statusDot.style.background = 'var(--brand-emerald)';
+        statusDot.style.boxShadow = '0 0 10px var(--brand-emerald)';
+        statusHeading.textContent = 'MÚSICA APROVADA';
+        statusSub.textContent = 'Faixa confirmada para o momento de entrada';
+        statusPill.textContent = 'CONFIRMADA 🟢';
+        statusPill.style.color = '#34d399';
+    } else if (status === 'ESCOLHIDO') {
+        statusDot.style.background = 'var(--brand-blue)';
+        statusDot.style.boxShadow = '0 0 10px var(--brand-blue)';
+        statusHeading.textContent = 'EM ANÁLISE';
+        statusSub.textContent = 'Sugestão enviada, aguardando aprovação da comissão';
+        statusPill.textContent = 'AGUARDANDO REVISÃO 🔵';
+        statusPill.style.color = '#93c5fd';
+    } else {
+        statusDot.style.background = 'var(--brand-amber)';
+        statusDot.style.boxShadow = '0 0 10px var(--brand-amber)';
+        statusHeading.textContent = 'PENDENTE';
+        statusSub.textContent = 'Você ainda não possui música registrada';
+        statusPill.textContent = 'SEM MÚSICA 🟡';
+        statusPill.style.color = '#fbbf24';
+    }
 
-    // Avatar e nome
-    document.getElementById('profileAvatar').textContent = getInitials(name);
-    document.getElementById('profileName').textContent = name;
-
-    // Turma pill
-    const pill = document.getElementById('profileTurmaPill');
-    pill.textContent = `3º Ano ${f.turma || State.turma}`;
-    pill.className = `profile-turma-pill ${f.turma || State.turma}`;
-
-    // Status badge
-    const badge = document.getElementById('profileStatusBadge');
-    const statusLabels = { PENDENTE: 'Pendente', ESCOLHIDO: 'Aguardando Aprovação', APROVADO: 'Aprovado ✓' };
-    badge.className = `profile-status-badge ${f.status || 'PENDENTE'}`;
-    badge.innerHTML = `<span class="status-dot"></span><span class="status-text">${statusLabels[f.status] || 'Pendente'}</span>`;
-
-    // Música escolhida ou não
-    const chosenCard = document.getElementById('musicChosenCard');
-    const noMusicCard = document.getElementById('noMusicCard');
-    if (f.musicTitle) {
-        chosenCard.style.display = '';
-        noMusicCard.style.display = 'none';
-        document.getElementById('chosenMusicTitle').textContent = f.musicTitle;
-        document.getElementById('chosenMusicArtist').textContent = f.musicArtist || '—';
-
-        const snippetEl = document.getElementById('chosenSnippet');
-        if (f.snippetStart || f.snippetEnd) {
-            snippetEl.style.display = '';
-            document.getElementById('chosenSnippetText').textContent = `${f.snippetStart || '0:00'} → ${f.snippetEnd || '—'}`;
+    // Exibição da música registrada
+    const songBox = document.getElementById('drawerCurrentSongBox');
+    if (student.musicTitle && student.musicTitle.trim()) {
+        songBox.style.display = 'flex';
+        document.getElementById('drawerSongTitle').textContent = student.musicTitle;
+        document.getElementById('drawerSongArtist').textContent = student.musicArtist || 'Artista não informado';
+        
+        const snippetEl = document.getElementById('drawerSongSnippet');
+        if (student.snippetStart || student.snippetEnd) {
+            snippetEl.style.display = 'inline-block';
+            snippetEl.innerHTML = `⏱ Trecho do refrão: <strong>${student.snippetStart || '0:00'} → ${student.snippetEnd || 'fim'}</strong>`;
         } else {
             snippetEl.style.display = 'none';
         }
 
-        const ytLink = document.getElementById('chosenYtLink');
-        if (f.musicLink && getYouTubeId(f.musicLink)) {
-            ytLink.href = f.musicLink;
-            ytLink.style.display = '';
+        const ytBtn = document.getElementById('drawerSongYoutubeLink');
+        if (student.musicLink) {
+            ytBtn.style.display = 'flex';
+            ytBtn.href = student.musicLink;
         } else {
-            ytLink.style.display = 'none';
+            ytBtn.style.display = 'none';
         }
     } else {
-        chosenCard.style.display = 'none';
-        noMusicCard.style.display = '';
+        songBox.style.display = 'none';
     }
 
-    // Pré-preenche formulário com dados existentes
-    document.getElementById('sugMusicLink').value = f.musicLink || '';
-    document.getElementById('sugMusicTitle').value = f.musicTitle || '';
-    document.getElementById('sugMusicArtist').value = f.musicArtist || '';
-    document.getElementById('sugSnippetStart').value = f.snippetStart || '';
-    document.getElementById('sugSnippetEnd').value = f.snippetEnd || '';
-    document.getElementById('sugFeedback').style.display = 'none';
-    document.getElementById('autoDetectInfo').style.display = 'none';
+    // Preenche formulário com os valores existentes para facilitar edição
+    document.getElementById('drawerInputLink').value = student.musicLink || '';
+    document.getElementById('drawerInputTitle').value = student.musicTitle || '';
+    document.getElementById('drawerInputArtist').value = student.musicArtist || '';
+    document.getElementById('drawerInputStart').value = student.snippetStart || '';
+    document.getElementById('drawerInputEnd').value = student.snippetEnd || '';
+    
+    document.getElementById('detectStatusMessage').style.display = 'none';
+    document.getElementById('submissionAlert').style.display = 'none';
 
-    slideLeft('screenSearch', 'screenProfile');
+    // Abre modal
+    document.getElementById('studentProfileDrawer').classList.add('open');
+    document.body.style.overflow = 'hidden';
 }
 
-// ===================== FORMULÁRIO DE SUGESTÃO =====================
+function closeStudentDrawer() {
+    document.getElementById('studentProfileDrawer').classList.remove('open');
+    document.body.style.overflow = '';
+}
 
-function initSuggestionForm() {
-    // Detectar música automaticamente
-    document.getElementById('btnDetectSong').addEventListener('click', async () => {
-        const url = document.getElementById('sugMusicLink').value.trim();
-        if (!url) { showToast('Cole o link do YouTube primeiro!', 'error'); return; }
-        const id = getYouTubeId(url);
-        if (!id) { showToast('Link do YouTube inválido.', 'error'); return; }
+// ==============================================================
+// DETECTOR INTELIGENTE DO YOUTUBE
+// ==============================================================
+async function handleAutoDetect() {
+    const linkInput = document.getElementById('drawerInputLink');
+    const msg = document.getElementById('detectStatusMessage');
+    const url = linkInput.value.trim();
 
-        const infoEl = document.getElementById('autoDetectInfo');
-        infoEl.style.display = '';
-        infoEl.textContent = '⏳ Identificando música...';
+    if (!url) {
+        showToast("Cole o link do YouTube primeiro!");
+        return;
+    }
 
-        try {
-            const res = await fetch(`/api/youtube-info?url=${encodeURIComponent(url)}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (data.song || data.artist) {
-                    if (data.song) document.getElementById('sugMusicTitle').value = data.song;
-                    if (data.artist) document.getElementById('sugMusicArtist').value = data.artist;
-                    infoEl.innerHTML = `✨ Detectado: <strong>${data.song || '—'}</strong>${data.artist ? ' • ' + data.artist : ''}`;
-                    return;
-                }
+    const vidId = getYouTubeId(url);
+    if (!vidId) {
+        showToast("Link do YouTube inválido.");
+        return;
+    }
+
+    msg.style.display = 'block';
+    msg.textContent = "⏳ Analisando dados do vídeo...";
+
+    try {
+        const res = await fetch(`/api/youtube-info?url=${encodeURIComponent(url)}`);
+        if (res.ok) {
+            const data = await res.json();
+            if (data.song || data.artist) {
+                if (data.song) document.getElementById('drawerInputTitle').value = data.song;
+                if (data.artist) document.getElementById('drawerInputArtist').value = data.artist;
+                msg.innerHTML = `✨ Reconhecido: <strong>${data.song}</strong> • ${data.artist}`;
+                return;
             }
-        } catch(e) {}
+        }
+    } catch (e) {}
 
-        // Fallback noembed
-        try {
-            const r2 = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${id}`);
-            if (r2.ok) {
-                const d2 = await r2.json();
-                if (d2.title) {
-                    const parts = d2.title.split(/ - | – | — /);
-                    const song = parts.length > 1 ? parts[1].trim() : d2.title.trim();
-                    const artist = parts.length > 1 ? parts[0].trim() : (d2.author_name || '');
-                    document.getElementById('sugMusicTitle').value = song;
-                    document.getElementById('sugMusicArtist').value = artist;
-                    infoEl.innerHTML = `✨ Detectado: <strong>${song}</strong>${artist ? ' • ' + artist : ''}`;
-                    return;
-                }
+    // Fallback noembed
+    try {
+        const res2 = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${vidId}`);
+        if (res2.ok) {
+            const d2 = await res2.json();
+            if (d2.title) {
+                const parts = d2.title.split(/ - | – | — /);
+                const song = parts.length > 1 ? parts[1].trim() : d2.title.trim();
+                const artist = parts.length > 1 ? parts[0].trim() : (d2.author_name || '');
+                document.getElementById('drawerInputTitle').value = song;
+                document.getElementById('drawerInputArtist').value = artist;
+                msg.innerHTML = `✨ Reconhecido: <strong>${song}</strong> • ${artist}`;
+                return;
             }
-        } catch(e) {}
-
-        infoEl.textContent = '⚠ Não foi possível detectar automaticamente. Preencha manualmente.';
-    });
-
-    // Submit
-    document.getElementById('suggestionForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-
-        const title = document.getElementById('sugMusicTitle').value.trim();
-        const link = document.getElementById('sugMusicLink').value.trim();
-
-        if (!title) { showToast('Informe o nome da música!', 'error'); return; }
-
-        const feedback = document.getElementById('sugFeedback');
-        feedback.className = 'sug-feedback';
-        feedback.style.display = '';
-        feedback.textContent = '⏳ Enviando sugestão...';
-
-        const fields = {
-            musicLink: link,
-            musicTitle: title,
-            musicArtist: document.getElementById('sugMusicArtist').value.trim(),
-            snippetStart: document.getElementById('sugSnippetStart').value.trim(),
-            snippetEnd: document.getElementById('sugSnippetEnd').value.trim(),
-            status: 'ESCOLHIDO',
-            updatedAt: new Date().toISOString()
-        };
-
-        // Se não tem ID, procura pelos dados
-        if (!State.student || !State.student.id) {
-            feedback.textContent = '⚠ Erro: formando não identificado. Volte e tente novamente.';
-            feedback.classList.add('error');
-            return;
         }
+    } catch (err) {}
 
-        const ok = await State.saveSuggestion(State.student.id, fields);
-
-        if (ok) {
-            feedback.textContent = '✅ Sugestão enviada com sucesso! Aguarde a avaliação da comissão.';
-            feedback.classList.add('success');
-            showToast('Sugestão enviada! ✓');
-            // Atualiza a tela
-            const updated = { ...State.student, ...fields };
-            State.student = updated;
-            openStudentProfile(updated.name);
-        } else {
-            feedback.textContent = '❌ Erro ao enviar. Tente novamente.';
-            feedback.classList.add('error');
-        }
-    });
+    msg.textContent = "💡 Vídeo carregado! Digite o nome da música e o artista abaixo.";
 }
 
-// ===================== BACK BUTTONS =====================
+// ==============================================================
+// SUBMISSÃO DO FORMULÁRIO DE ESCOLHA
+// ==============================================================
+async function handleFormSubmit(e) {
+    e.preventDefault();
+    if (!AppState.currentStudent) return;
 
-function initBackButtons() {
-    document.getElementById('btnBackToTurma').addEventListener('click', () => {
-        slideLeft('screenSearch', 'screenTurma');
-        document.getElementById('screenTurma').classList.remove('slide-left');
-        document.getElementById('screenTurma').classList.add('active');
-        document.getElementById('screenSearch').classList.remove('active');
-    });
+    const btn = document.getElementById('btnSubmitDrawerForm');
+    const alertBox = document.getElementById('submissionAlert');
 
-    document.getElementById('btnBackToSearch').addEventListener('click', () => {
-        slideLeft('screenProfile', 'screenSearch');
-        document.getElementById('screenSearch').classList.remove('slide-left');
-        document.getElementById('screenSearch').classList.add('active');
-        document.getElementById('screenProfile').classList.remove('active');
-    });
+    const title = document.getElementById('drawerInputTitle').value.trim();
+    const artist = document.getElementById('drawerInputArtist').value.trim();
+    const link = document.getElementById('drawerInputLink').value.trim();
+    const start = document.getElementById('drawerInputStart').value.trim();
+    const end = document.getElementById('drawerInputEnd').value.trim();
+
+    if (!title) {
+        alert("Por favor, digite o nome da música.");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = `<span>ENVIANDO ESCOLHA...</span>`;
+
+    const updated = {
+        ...AppState.currentStudent,
+        musicTitle: title,
+        musicArtist: artist,
+        musicLink: link,
+        snippetStart: start,
+        snippetEnd: end,
+        status: AppState.currentStudent.status === 'APROVADO' ? 'APROVADO' : 'ESCOLHIDO',
+        updatedAt: new Date().toISOString()
+    };
+
+    const success = await AppState.saveStudent(updated);
+
+    if (success) {
+        alertBox.className = 'submission-alert success';
+        alertBox.innerHTML = `✨ <strong>Música enviada com sucesso!</strong> A comissão já tem acesso à sua escolha.`;
+        alertBox.style.display = 'block';
+
+        showToast("Escolha salva com sucesso! 🎓");
+
+        // Atualiza a visualização do card do aluno e a lista
+        AppState.currentStudent = updated;
+        renderStudentsList(document.getElementById('studentSearchInput').value);
+
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = `<span>SALVAR & ENVIAR MINHA ESCOLHA</span> <span class="btn-arrow">→</span>`;
+            openStudentDrawer(updated);
+        }, 1200);
+    } else {
+        alert("Ocorreu um erro ao salvar sua sugestão. Tente novamente.");
+        btn.disabled = false;
+        btn.innerHTML = `<span>SALVAR & ENVIAR MINHA ESCOLHA</span> <span class="btn-arrow">→</span>`;
+    }
 }
 
-// ===================== INIT =====================
+// ==============================================================
+// INICIALIZAÇÃO E EVENT LISTENERS
+// ==============================================================
+document.addEventListener('DOMContentLoaded', async () => {
+    await AppState.init();
 
-async function init() {
-    // Atualiza contagem nas turmas
-    document.getElementById('countA').textContent = `${TURMA_A.length} formandos`;
-    document.getElementById('countB').textContent = `${TURMA_B.length} formandos`;
+    // 1. Botões de Seleção de Turma no Hero
+    document.querySelectorAll('.turma-card-modern').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const turma = btn.dataset.turma;
+            AppState.selectedTurma = turma;
 
-    await State.load();
+            document.getElementById('sidebarTurmaPill').textContent = `3º ANO ${turma}`;
+            document.getElementById('studentSearchInput').value = '';
+            document.getElementById('clearSearchBtn').style.display = 'none';
 
-    initTurmaScreen();
-    initSuggestionForm();
-    initBackButtons();
-}
+            renderStudentsList();
+            switchStage('list');
+        });
+    });
 
-document.addEventListener('DOMContentLoaded', init);
+    // 2. Voltar para Escolha de Turma
+    document.getElementById('btnBackToHero').addEventListener('click', () => {
+        switchStage('turma');
+    });
+
+    // 3. Campo de Busca com Limpeza Rápida
+    const searchInput = document.getElementById('studentSearchInput');
+    const clearBtn = document.getElementById('clearSearchBtn');
+
+    searchInput.addEventListener('input', () => {
+        const val = searchInput.value;
+        clearBtn.style.display = val ? 'block' : 'none';
+        renderStudentsList(val);
+    });
+
+    clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        clearBtn.style.display = 'none';
+        renderStudentsList('');
+        searchInput.focus();
+    });
+
+    // 4. Fechar Drawer
+    document.getElementById('btnCloseDrawer').addEventListener('click', closeStudentDrawer);
+    document.getElementById('drawerBackdrop').addEventListener('click', closeStudentDrawer);
+
+    // 5. Detectar dados no YouTube
+    document.getElementById('btnAutoDetect').addEventListener('click', handleAutoDetect);
+
+    // 6. Enviar formulário
+    document.getElementById('drawerSuggestionForm').addEventListener('submit', handleFormSubmit);
+});

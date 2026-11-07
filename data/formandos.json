@@ -1,18 +1,5 @@
 [
   {
-    "id": "default_1",
-    "name": "Ana Júlia Santos",
-    "turma": "A",
-    "musicTitle": "Viva La Vida",
-    "musicArtist": "Coldplay",
-    "musicLink": "https://www.youtube.com/watch?v=tbneQDc2H3I",
-    "musicMp3": "",
-    "snippetStart": "0:40",
-    "snippetEnd": "1:15",
-    "status": "APROVADO",
-    "createdAt": "2026-11-03T00:00:00.000Z"
-  },
-  {
     "id": "default_2",
     "name": "Lucas Oliveira Ramos",
     "turma": "B",
@@ -24,19 +11,6 @@
     "snippetEnd": "1:00",
     "status": "ESCOLHIDO",
     "createdAt": "2026-11-04T00:00:00.000Z"
-  },
-  {
-    "id": "default_3",
-    "name": "Beatriz M. Costa",
-    "turma": "A",
-    "musicTitle": "Hear Me Now",
-    "musicArtist": "Alok, Bruno Martini",
-    "musicLink": "https://www.youtube.com/watch?v=JVpY84y172k",
-    "musicMp3": "",
-    "snippetStart": "1:05",
-    "snippetEnd": "1:40",
-    "status": "APROVADO",
-    "createdAt": "2026-11-05T00:00:00.000Z"
   },
   {
     "id": "default_4",

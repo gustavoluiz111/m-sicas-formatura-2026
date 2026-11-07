@@ -2,192 +2,309 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Músicas de Formatura 2026 · 3º Ano</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Músicas de Formatura 2026 · Terceirão</title>
+    
+    <!-- Google Fonts: Bebas Neue, Space Grotesk, Syne, Outfit -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
     <link rel="stylesheet" href="css/student.css">
 </head>
 <body>
 
-    <!-- ===== TELA 1: ESCOLHA DE TURMA ===== -->
-    <div id="screenTurma" class="screen active">
-        <!-- BG Orbs -->
-        <div class="orb orb-blue"></div>
-        <div class="orb orb-purple"></div>
-        <div class="orb orb-cyan"></div>
+    <!-- Canvas para Efeito de Partículas / Glow Dinâmico -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+    <div class="ambient-glow glow-3"></div>
+    <div class="grain-overlay"></div>
 
-        <div class="turma-select-wrapper">
-            <div class="app-brand">
-                <div class="brand-icon">🎓</div>
-                <h1 class="brand-title">FormandoMusix</h1>
-                <p class="brand-sub">Músicas de Formatura 2026 · 3º Ano</p>
+    <div class="app-viewport">
+
+        <!-- HEADER MINIMALISTA & EDITORIAL -->
+        <header class="editorial-nav">
+            <div class="nav-left">
+                <span class="nav-tag">CLASS OF 2026</span>
+                <span class="nav-sep">/</span>
+                <span class="nav-title">MÚSICAS DE ENTRADA</span>
             </div>
-
-            <div class="select-turma-card">
-                <p class="select-label">Qual é a sua turma?</p>
-                <div class="turma-btns">
-                    <button class="turma-pick-btn" data-turma="A">
-                        <span class="turma-pick-emoji">🅰</span>
-                        <span class="turma-pick-label">3º Ano A</span>
-                        <span class="turma-pick-count" id="countA">39 formandos</span>
-                    </button>
-                    <button class="turma-pick-btn" data-turma="B">
-                        <span class="turma-pick-emoji">🅱</span>
-                        <span class="turma-pick-label">3º Ano B</span>
-                        <span class="turma-pick-count" id="countB">34 formandos</span>
-                    </button>
-                </div>
+            <div class="nav-center">
+                <span class="nav-edition">3º ANO A & B • EDIÇÃO OFICIAL</span>
             </div>
-
-            <a href="admin.html" class="admin-link-hint">
-                🔒 Acesso Administrativo
-            </a>
-        </div>
-    </div>
-
-    <!-- ===== TELA 2: BUSCA DO ALUNO ===== -->
-    <div id="screenSearch" class="screen">
-        <div class="orb orb-blue"></div>
-        <div class="orb orb-purple"></div>
-
-        <div class="search-screen-wrapper">
-            <div class="search-header">
-                <button id="btnBackToTurma" class="back-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <div class="search-header-info">
-                    <div class="turma-pill" id="turmaPill">3º Ano A</div>
-                    <h2 class="search-screen-title">Encontre seu nome</h2>
-                </div>
-            </div>
-
-            <div class="search-input-box">
-                <svg class="search-ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                <input type="text" id="studentSearchInput" placeholder="Digite seu nome..." autocomplete="off" autocorrect="off">
-                <button class="clear-search-btn" id="clearSearchBtn" style="display:none;">✕</button>
-            </div>
-
-            <div class="students-list" id="studentsList">
-                <!-- Alunos aqui -->
-            </div>
-        </div>
-    </div>
-
-    <!-- ===== TELA 3: PERFIL DO ALUNO ===== -->
-    <div id="screenProfile" class="screen">
-        <div class="orb orb-blue small"></div>
-        <div class="orb orb-purple small"></div>
-
-        <div class="profile-wrapper">
-            <div class="profile-header">
-                <button id="btnBackToSearch" class="back-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
-                </button>
-                <div class="profile-turma-pill" id="profileTurmaPill">3º Ano A</div>
-            </div>
-
-            <div class="profile-hero">
-                <div class="profile-avatar" id="profileAvatar">J</div>
-                <h2 class="profile-name" id="profileName">Nome do Aluno</h2>
-                <div class="profile-status-badge" id="profileStatusBadge">
-                    <span class="status-dot"></span>
-                    <span class="status-text">Pendente</span>
-                </div>
-            </div>
-
-            <!-- Se já tem música escolhida -->
-            <div class="music-chosen-card" id="musicChosenCard" style="display:none;">
-                <div class="chosen-label">🎵 Música Escolhida</div>
-                <div class="chosen-music-title" id="chosenMusicTitle">—</div>
-                <div class="chosen-music-artist" id="chosenMusicArtist">—</div>
-                <div class="chosen-snippet" id="chosenSnippet" style="display:none;">
-                    <span>⏱ Trecho:</span>
-                    <span id="chosenSnippetText">—</span>
-                </div>
-                <a class="chosen-yt-link" id="chosenYtLink" href="#" target="_blank" rel="noopener" style="display:none;">
-                    ▶ Ouvir no YouTube
+            <div class="nav-right">
+                <a href="admin.html" class="admin-chip">
+                    <span class="chip-dot"></span>
+                    <span>PAINEL ADMIN</span>
                 </a>
             </div>
+        </header>
 
-            <!-- Sem música ainda -->
-            <div class="no-music-card" id="noMusicCard" style="display:none;">
-                <div class="no-music-icon">🎵</div>
-                <p>Você ainda não enviou sua sugestão de música.</p>
-                <p class="no-music-hint">Use o formulário abaixo para sugerir!</p>
-            </div>
+        <!-- CONTAINER PRINCIPAL FULLSCREEN -->
+        <main class="main-stage">
 
-            <!-- Formulário de sugestão -->
-            <div class="suggestion-card">
-                <h3 class="suggestion-title">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                    Sugerir minha música
-                </h3>
-
-                <form id="suggestionForm">
-                    <div class="sug-form-group">
-                        <label>Link do YouTube *</label>
-                        <div class="sug-input-row">
-                            <input type="url" id="sugMusicLink" placeholder="https://youtube.com/watch?v=..." autocomplete="off">
-                            <button type="button" class="sug-detect-btn" id="btnDetectSong">
-                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                                Detectar
-                            </button>
-                        </div>
-                        <div class="auto-detect-info" id="autoDetectInfo" style="display:none;"></div>
+            <!-- ==============================================
+                 FASE 1: HERO EDITORIAL + ESCOLHA DA TURMA
+                 ============================================== -->
+            <section id="stepTurma" class="stage-section active">
+                <div class="hero-editorial">
+                    <div class="hero-top-meta">
+                        <span class="meta-item">COMISSÃO DE FORMATURA</span>
+                        <span class="meta-item">SELEÇÃO MUSICAL EXCLUSIVA</span>
+                        <span class="meta-item" id="totalHeroCount">73 FORMANDOS</span>
                     </div>
 
-                    <div class="sug-form-row">
-                        <div class="sug-form-group">
-                            <label>Nome da Música *</label>
-                            <input type="text" id="sugMusicTitle" placeholder="Ex: Viva La Vida" required>
-                        </div>
-                        <div class="sug-form-group">
-                            <label>Artista / Banda</label>
-                            <input type="text" id="sugMusicArtist" placeholder="Ex: Coldplay">
+                    <!-- TIPOGRAFIA MASSIVA ESTILO BRUTALISTA / EDITORIAL -->
+                    <div class="hero-title-box">
+                        <div class="title-row-sub">TRILHA SONORA DO SEU MOMENTO</div>
+                        <h1 class="giant-headline">
+                            <span class="word-outline">SUA</span>
+                            <span class="word-fill">MÚSICA</span>
+                        </h1>
+                        <div class="title-banner-sub">
+                            <span class="sub-badge">FORMATURA 2026</span>
+                            <p class="sub-desc">Selecione sua turma abaixo, encontre seu nome na chamada oficial e envie a música que vai marcar sua entrada triunfal.</p>
                         </div>
                     </div>
 
-                    <div class="sug-form-row">
-                        <div class="sug-form-group">
-                            <label>Início do Trecho (opcional)</label>
-                            <input type="text" id="sugSnippetStart" placeholder="Ex: 0:40 ou 40">
-                        </div>
-                        <div class="sug-form-group">
-                            <label>Fim do Trecho (opcional)</label>
-                            <input type="text" id="sugSnippetEnd" placeholder="Ex: 1:15 ou 75">
-                        </div>
-                    </div>
+                    <!-- CARTÕES DE TURMA GLASSMORPHISM HIGH-END -->
+                    <div class="class-selection-container">
+                        <button class="turma-card-modern" data-turma="A">
+                            <div class="card-glass-bg"></div>
+                            <div class="card-inner">
+                                <div class="turma-top-row">
+                                    <span class="turma-badge">TURMA OFICIAL</span>
+                                    <span class="turma-arrow">↗</span>
+                                </div>
+                                <div class="turma-big-symbol">3º A</div>
+                                <div class="turma-meta">
+                                    <h3>3º Ano A</h3>
+                                    <p>39 Formandos Cadastrados</p>
+                                </div>
+                                <div class="turma-cta">
+                                    <span>SELECIONAR TURMA</span>
+                                </div>
+                            </div>
+                        </button>
 
-                    <div class="sug-notice">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        Sua sugestão será analisada pela comissão. Apenas músicas aprovadas serão confirmadas.
-                    </div>
-
-                    <div class="sug-form-actions">
-                        <button type="submit" class="btn-submit-sug" id="btnSubmitSug">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-                            Enviar Sugestão
+                        <button class="turma-card-modern turma-b-card" data-turma="B">
+                            <div class="card-glass-bg"></div>
+                            <div class="card-inner">
+                                <div class="turma-top-row">
+                                    <span class="turma-badge">TURMA OFICIAL</span>
+                                    <span class="turma-arrow">↗</span>
+                                </div>
+                                <div class="turma-big-symbol">3º B</div>
+                                <div class="turma-meta">
+                                    <h3>3º Ano B</h3>
+                                    <p>34 Formandos Cadastrados</p>
+                                </div>
+                                <div class="turma-cta">
+                                    <span>SELECIONAR TURMA</span>
+                                </div>
+                            </div>
                         </button>
                     </div>
 
-                    <div class="sug-feedback" id="sugFeedback" style="display:none;"></div>
-                </form>
+                    <div class="hero-footer-bar">
+                        <span>AUDIO CUTTER & PREVIEW INTEGRADO</span>
+                        <span class="footer-dot">•</span>
+                        <span>SISTEMA DE SINCRONIZAÇÃO EM TEMPO REAL</span>
+                    </div>
+                </div>
+            </section>
+
+
+            <!-- ==============================================
+                 FASE 2: LISTAGEM DA TURMA + BUSCA EM TELA TODA
+                 ============================================== -->
+            <section id="stepList" class="stage-section">
+                <div class="split-view">
+                    
+                    <!-- PAINEL LATERAL ESQUERDO: FILTROS & CABEÇALHO -->
+                    <aside class="sidebar-editorial">
+                        <button id="btnBackToHero" class="btn-back-pill">
+                            <span class="arrow-back">←</span>
+                            <span>MUDAR TURMA</span>
+                        </button>
+
+                        <div class="sidebar-header-box">
+                            <div class="sidebar-turma-tag" id="sidebarTurmaPill">3º ANO A</div>
+                            <h2 class="sidebar-title">LISTA DE FORMANDOS</h2>
+                            <p class="sidebar-desc">Encontre o seu nome na relação oficial abaixo para visualizar a sua situação ou sugerir sua música.</p>
+                        </div>
+
+                        <!-- BUSCA DE ALUNO -->
+                        <div class="search-glass-wrap">
+                            <div class="search-icon-wrap">🔍</div>
+                            <input type="text" id="studentSearchInput" placeholder="Digite seu nome completo..." autocomplete="off">
+                            <button id="clearSearchBtn" class="clear-btn-glass" style="display:none;">✕</button>
+                        </div>
+
+                        <!-- STATUS COUNTER -->
+                        <div class="stats-pills-row">
+                            <div class="stat-bubble">
+                                <span class="stat-num" id="sideStatTotal">0</span>
+                                <span class="stat-lbl">TOTAL</span>
+                            </div>
+                            <div class="stat-bubble green">
+                                <span class="stat-num" id="sideStatAprovados">0</span>
+                                <span class="stat-lbl">APROVADAS</span>
+                            </div>
+                            <div class="stat-bubble yellow">
+                                <span class="stat-num" id="sideStatPendentes">0</span>
+                                <span class="stat-lbl">PENDENTES</span>
+                            </div>
+                        </div>
+
+                        <div class="instructions-card-glass">
+                            <div class="glass-inst-title">💡 Dica de Escolha</div>
+                            <p>Ao selecionar a música no YouTube, você poderá apontar os segundos exatos (início e fim) do refrão para tocar no momento dos seus passos até o palco.</p>
+                        </div>
+                    </aside>
+
+                    <!-- PAINEL DIREITO: TABELA / GRID EDITORIAL DE ALUNOS -->
+                    <div class="content-table-wrapper">
+                        <div class="table-top-bar">
+                            <span class="col-head-name">FORMANDO</span>
+                            <span class="col-head-song">MÚSICA SELECIONADA</span>
+                            <span class="col-head-status">SITUAÇÃO</span>
+                            <span class="col-head-action">AÇÃO</span>
+                        </div>
+
+                        <div class="student-cards-scroll" id="studentsScrollList">
+                            <!-- Cards/Linhas geradas dinamicamente -->
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+
+
+            <!-- ==============================================
+                 FASE 3: MODAL / DRAWER INTERATIVO DO FORMANDO
+                 ============================================== -->
+            <div id="studentProfileDrawer" class="editorial-drawer">
+                <div class="drawer-backdrop" id="drawerBackdrop"></div>
+                <div class="drawer-window glass-panel">
+                    
+                    <div class="drawer-header">
+                        <div class="drawer-user-info">
+                            <div class="drawer-avatar" id="drawerAvatar">AL</div>
+                            <div>
+                                <div class="drawer-turma-badge" id="drawerTurmaBadge">3º ANO A</div>
+                                <h3 class="drawer-user-name" id="drawerUserName">Nome do Formando</h3>
+                            </div>
+                        </div>
+                        <button class="drawer-close-btn" id="btnCloseDrawer">✕</button>
+                    </div>
+
+                    <div class="drawer-scroll-body">
+                        
+                        <!-- CARD DO STATUS ATUAL -->
+                        <div class="status-banner-card" id="drawerStatusBanner">
+                            <div class="status-left">
+                                <div class="status-indicator-dot"></div>
+                                <div>
+                                    <div class="status-heading" id="drawerStatusTitle">PENDENTE</div>
+                                    <div class="status-sub" id="drawerStatusSub">Aguardando envio ou aprovação da comissão</div>
+                                </div>
+                            </div>
+                            <div class="status-pill-lg" id="drawerStatusPill">NENHUMA MÚSICA</div>
+                        </div>
+
+                        <!-- EXIBIÇÃO DA MÚSICA ESCOLHIDA (SE EXISTIR) -->
+                        <div class="current-song-box glass-panel-nested" id="drawerCurrentSongBox" style="display:none;">
+                            <div class="song-box-header">
+                                <span class="song-box-label">MÚSICA ATUAL REGISTRADA</span>
+                                <span class="song-badge-music">YOUTUBE TRACK</span>
+                            </div>
+                            <div class="song-box-body">
+                                <div class="song-icon-disc">💿</div>
+                                <div class="song-info-meta">
+                                    <h4 class="song-main-title" id="drawerSongTitle">—</h4>
+                                    <p class="song-artist-name" id="drawerSongArtist">—</p>
+                                    <div class="song-snippet-pill" id="drawerSongSnippet">
+                                        ⏱ Trecho do refrão: <strong>0:00 → 0:30</strong>
+                                    </div>
+                                </div>
+                            </div>
+                            <a href="#" target="_blank" id="drawerSongYoutubeLink" class="btn-yt-external">
+                                <span>ASSISTIR NO YOUTUBE</span>
+                                <span>↗</span>
+                            </a>
+                        </div>
+
+                        <!-- FORMULÁRIO DE SUGESTÃO / ATUALIZAÇÃO -->
+                        <div class="form-container-glass">
+                            <div class="form-title-row">
+                                <h4>SUGERIR OU ALTERAR MÚSICA</h4>
+                                <span class="form-badge">FORMULÁRIO OFICIAL</span>
+                            </div>
+
+                            <form id="drawerSuggestionForm">
+                                <div class="input-field-group">
+                                    <label>LINK DO YOUTUBE</label>
+                                    <div class="input-with-action">
+                                        <input type="url" id="drawerInputLink" placeholder="Cole o link https://www.youtube.com/watch?v=..." autocomplete="off">
+                                        <button type="button" id="btnAutoDetect" class="btn-detect-action">
+                                            <span>✨ DETECTAR DADOS</span>
+                                        </button>
+                                    </div>
+                                    <div class="detect-badge-status" id="detectStatusMessage" style="display:none;"></div>
+                                </div>
+
+                                <div class="two-cols-row">
+                                    <div class="input-field-group">
+                                        <label>NOME DA MÚSICA *</label>
+                                        <input type="text" id="drawerInputTitle" placeholder="Ex: Viva La Vida" required>
+                                    </div>
+                                    <div class="input-field-group">
+                                        <label>ARTISTA OU BANDA *</label>
+                                        <input type="text" id="drawerInputArtist" placeholder="Ex: Coldplay" required>
+                                    </div>
+                                </div>
+
+                                <div class="two-cols-row">
+                                    <div class="input-field-group">
+                                        <label>INÍCIO DO TRECHO (REFRÃO)</label>
+                                        <input type="text" id="drawerInputStart" placeholder="Ex: 0:45 ou 45">
+                                    </div>
+                                    <div class="input-field-group">
+                                        <label>FIM DO TRECHO</label>
+                                        <input type="text" id="drawerInputEnd" placeholder="Ex: 1:15 ou 75">
+                                    </div>
+                                </div>
+
+                                <div class="drawer-notice-box">
+                                    <span>⚠️</span>
+                                    <p>Ao enviar, sua sugestão entrará com o status <strong>"ESCOLHIDO"</strong> para revisão da comissão organizadora. Apenas faixas adequadas para o evento solene serão aprovadas.</p>
+                                </div>
+
+                                <button type="submit" class="btn-submit-hero" id="btnSubmitDrawerForm">
+                                    <span>SALVAR & ENVIAR MINHA ESCOLHA</span>
+                                    <span class="btn-arrow">→</span>
+                                </button>
+
+                                <div class="submission-alert" id="submissionAlert" style="display:none;"></div>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
             </div>
 
-            <div class="profile-footer-note">
-                💡 Para alterações após a aprovação, entre em contato com a comissão.
-            </div>
+        </main>
+
+        <!-- FLOATING TOAST -->
+        <div class="toast-floating" id="toastMessage">
+            <span class="toast-icon">✓</span>
+            <span class="toast-txt" id="toastText">Operação concluída</span>
         </div>
+
     </div>
 
-    <!-- ===== TOAST de Notificação ===== -->
-    <div class="toast" id="toast">
-        <span class="toast-icon">✓</span>
-        <span class="toast-text" id="toastText">Mensagem</span>
-    </div>
-
+    <!-- Script de Gestão Pública de Alunos -->
     <script src="js/student.js"></script>
 </body>
 </html>
