@@ -7,61 +7,61 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@500;700&family=Outfit:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/student.css">
 </head>
 <body>
 
-    <!-- Ambient background effects -->
-    <div class="ambient-glow glow-1"></div>
-    <div class="ambient-glow glow-2"></div>
+    <!-- Ambient background effects (Azul escuro, prata e dourado) -->
+    <div class="ambient-glow glow-blue"></div>
+    <div class="ambient-glow glow-gold"></div>
     <div class="grain-overlay"></div>
 
     <div class="app-layout">
         
-        <!-- TOPO DISCRETO -->
+        <!-- TOPO -->
         <header class="top-bar">
             <div class="brand-tag">FORMATURA 2026</div>
-            <a href="admin.html" class="admin-link">🔒 Painel Admin</a>
+            <a href="admin.html" class="admin-link">Painel Admin</a>
         </header>
 
         <!-- CONTAINER PRINCIPAL -->
         <main class="center-stage">
 
-            <!-- PASSO 1: ESCOLHER A TURMA (DIRETO E IMPACTANTE) -->
+            <!-- PASSO 1: ESCOLHER A TURMA -->
             <section id="stepTurma" class="view-panel active">
                 <div class="headline-box">
-                    <span class="headline-sub">ESCOLHA SUA TURMA</span>
+                    <span class="headline-sub">SELEÇÃO OFICIAL DE ENTRADA</span>
                     <h1 class="headline-main">
-                        <span class="outline-txt">SELEÇÃO DE</span>
-                        <span class="fill-txt">MÚSICAS</span>
+                        <span class="silver-txt">ESCOLHA SUA</span>
+                        <span class="gold-txt">TURMA</span>
                     </h1>
                 </div>
 
                 <div class="turmas-grid">
                     <!-- TURMA A -->
-                    <button class="turma-btn" data-turma="A">
+                    <button class="turma-btn turma-gold" data-turma="A">
                         <div class="glass-fill"></div>
                         <div class="btn-content">
-                            <span class="btn-tag">TERCEIRÃO</span>
+                            <span class="btn-tag">TERCEIRÃO 2026</span>
                             <span class="btn-letter">3º A</span>
-                            <span class="btn-action">ENTRAR NA TURMA A →</span>
+                            <span class="btn-action">Acessar Turma A →</span>
                         </div>
                     </button>
 
                     <!-- TURMA B -->
-                    <button class="turma-btn turma-b" data-turma="B">
+                    <button class="turma-btn turma-silver" data-turma="B">
                         <div class="glass-fill"></div>
                         <div class="btn-content">
-                            <span class="btn-tag">TERCEIRÃO</span>
+                            <span class="btn-tag">TERCEIRÃO 2026</span>
                             <span class="btn-letter">3º B</span>
-                            <span class="btn-action">ENTRAR NA TURMA B →</span>
+                            <span class="btn-action">Acessar Turma B →</span>
                         </div>
                     </button>
                 </div>
             </section>
 
-            <!-- PASSO 2: SELECIONAR SEU NOME E ENVIAR MÚSICA -->
+            <!-- PASSO 2: SELECIONAR SEU NOME -->
             <section id="stepAlunos" class="view-panel">
                 <div class="panel-head">
                     <button id="btnVoltarTurma" class="back-pill">← Trocar de Turma</button>
@@ -78,7 +78,7 @@
 
         </main>
 
-        <!-- MODAL SIMPLES PARA ENVIAR/VER MÚSICA DO ALUNO -->
+        <!-- MODAL DO FORMANDO: ESCOLHER/CORTAR MÚSICA & GERAR PNG -->
         <div id="modalAluno" class="modal-overlay">
             <div class="modal-card">
                 <div class="modal-header">
@@ -95,15 +95,37 @@
                     <div class="sit-info" id="sitMusicaTxt">Nenhuma música escolhida ainda</div>
                 </div>
 
-                <!-- FORMULÁRIO RÁPIDO -->
+                <!-- BOTÃO DE BAIXAR COMPROVANTE PNG (QUANDO JÁ TEM MÚSICA) -->
+                <button type="button" id="btnDownloadCardPng" class="btn-download-png" style="display:none;">
+                    Baixar Cartão da Minha Música (PNG)
+                </button>
+
+                <!-- FORMULÁRIO -->
                 <form id="formMusica" class="form-rapido">
+                    
+                    <!-- ESCOLHA DO LINK OU BUSCA NO YOUTUBE -->
                     <div class="form-group">
-                        <label>Link do YouTube</label>
-                        <div class="input-detect">
-                            <input type="url" id="inputYtLink" placeholder="https://www.youtube.com/watch?v=...">
-                            <button type="button" id="btnDetectar">Detectar</button>
+                        <label>Escolha o Link ou Procure o Vídeo</label>
+                        <div class="input-detect-row">
+                            <input type="url" id="inputYtLink" placeholder="Cole o link do YouTube...">
+                            <button type="button" id="btnProcurarVideo" class="btn-secondary-action">Procurar Vídeo</button>
+                            <button type="button" id="btnDetectar" class="btn-secondary-action">Detectar</button>
                         </div>
                         <span class="detect-result" id="detectResult"></span>
+                    </div>
+
+                    <!-- REPRODUTOR E CORTADOR DE VÍDEO EMBUTIDO NO SITE -->
+                    <div class="video-cutter-area" id="videoCutterArea" style="display:none;">
+                        <div class="cutter-video-frame">
+                            <div id="youtubePlayerTarget"></div>
+                        </div>
+                        <div class="cutter-timer-row">
+                            <span>Tempo atual: <strong id="liveCurrentTime">0:00</strong></span>
+                            <div class="stamp-btns">
+                                <button type="button" id="btnStampStart">Definir Início</button>
+                                <button type="button" id="btnStampEnd">Definir Fim (+45s)</button>
+                            </div>
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -119,24 +141,32 @@
                     <div class="form-row-2">
                         <div class="form-group">
                             <label>Início do Trecho</label>
-                            <input type="text" id="inputInicio" placeholder="Ex: 0:40">
+                            <input type="text" id="inputInicio" placeholder="Ex: 0:40 ou 40">
                         </div>
                         <div class="form-group">
-                            <label>Fim do Trecho</label>
-                            <input type="text" id="inputFim" placeholder="Ex: 1:10">
+                            <label>Fim do Trecho (Regra: 45s)</label>
+                            <input type="text" id="inputFim" placeholder="Calculado automaticamente">
                         </div>
                     </div>
 
-                    <button type="submit" class="btn-salvar" id="btnSalvarMusica">Salvar Minha Música ✓</button>
+                    <div class="rule-box-45s">
+                        Regra de Entrada: O trecho terá exatamente <strong>45 segundos</strong> de duração para a sua entrada solene.
+                    </div>
+
+                    <button type="submit" class="btn-salvar" id="btnSalvarSugestao">Salvar Sugestão</button>
                 </form>
             </div>
         </div>
 
+        <!-- CANVAS INVISÍVEL PARA GERAÇÃO DO CARTÃO PNG -->
+        <canvas id="cardCanvas" width="900" height="540" style="display:none;"></canvas>
+
         <!-- AVISO TOAST -->
-        <div id="toast" class="toast-box">Música salva com sucesso!</div>
+        <div id="toast" class="toast-box">Operação realizada com sucesso!</div>
 
     </div>
 
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script src="js/student.js"></script>
 </body>
 </html>

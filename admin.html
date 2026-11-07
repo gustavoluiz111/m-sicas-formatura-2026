@@ -2,427 +2,286 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin · FormandoMusix 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo · Músicas de Formatura 2026</title>
+    
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Space+Grotesk:wght@500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
 
-    <!-- ========== TELA DE LOGIN DO ADMIN ========== -->
-    <div id="adminLoginScreen" class="login-screen active">
-        <div class="orb orb-blue"></div>
-        <div class="orb orb-purple"></div>
-        <div class="orb orb-cyan"></div>
+    <!-- Ambient Glows -->
+    <div class="ambient-glow glow-blue"></div>
+    <div class="ambient-glow glow-gold"></div>
 
+    <!-- TELA DE LOGIN DO ADMIN (SEM EMOJIS) -->
+    <div id="adminLoginScreen" class="login-screen active">
         <div class="login-card">
             <div class="login-brand">
-                <div class="login-brand-icon">👑</div>
-                <h1 class="login-title">Painel Admin</h1>
-                <p class="login-sub">FormandoMusix 2026 · Acesso Restrito</p>
+                <span class="login-tag">CONTROLE OFICIAL</span>
+                <h1 class="login-title">Painel Administrativo</h1>
+                <p class="login-sub">Formatura 2026 · Acesso Exclusivo</p>
             </div>
 
             <form id="adminLoginForm">
                 <div class="login-form-group">
                     <label for="adminPassInput">Senha de Administrador</label>
                     <div class="pass-input-wrap">
-                        <input type="password" id="adminPassInput" placeholder="Digite a senha..." required autocomplete="current-password">
-                        <button type="button" class="toggle-pass-btn" id="togglePassBtn">
-                            <svg id="eyeIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                            <svg id="eyeOffIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-                        </button>
+                        <input type="password" id="adminPassInput" placeholder="Digite sua senha..." required autocomplete="current-password">
+                        <button type="button" class="toggle-pass-btn" id="togglePassBtn">Exibir</button>
                     </div>
-                    <div class="login-error" id="loginError" style="display:none;">❌ Senha incorreta. Tente novamente.</div>
+                    <div class="login-error" id="loginError" style="display:none;">Senha incorreta. Tente novamente.</div>
                 </div>
 
                 <button type="submit" class="login-btn" id="loginSubmitBtn">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                    Entrar no Painel
+                    Acessar Painel
                 </button>
             </form>
 
-            <a href="index.html" class="back-to-student-link">← Voltar para a página dos formandos</a>
+            <a href="index.html" class="back-to-student-link">← Retornar à página inicial</a>
         </div>
     </div>
 
-    <!-- ========== PAINEL PRINCIPAL DO ADMIN ========== -->
+    <!-- PAINEL PRINCIPAL DO ADMIN (SEM EMOJIS, AZUL ESCURO, DOURADO E PRATA) -->
     <div id="adminPanel" class="admin-panel" style="display:none;">
 
-        <!-- Header fixo -->
+        <!-- HEADER -->
         <header class="admin-header">
             <div class="admin-header-left">
                 <div class="admin-logo">
-                    <span class="admin-logo-icon">👑</span>
-                    <div>
-                        <span class="admin-logo-text">FormandoMusix</span>
-                        <span class="admin-logo-sub">Painel Administrativo</span>
-                    </div>
+                    <span class="admin-logo-text">FormandoMusix</span>
+                    <span class="admin-logo-sub">Painel Administrativo 2026</span>
                 </div>
             </div>
+
+            <!-- ABAS: MOSTRA 'TODOS' PRIMEIRO E ABA 'PEDIDOS NOVOS' -->
             <div class="admin-header-center">
                 <div class="admin-tabs">
-                    <button class="admin-tab active" data-tab="turmaA">
-                        <span>🅰 Turma A</span>
+                    <button class="admin-tab active" data-tab="todos">
+                        <span>Todos os Formandos</span>
+                        <span class="tab-badge" id="badgeTodos">73</span>
+                    </button>
+                    <button class="admin-tab" data-tab="pedidosNovos">
+                        <span>Pedidos Novos</span>
+                        <span class="tab-badge badge-alert" id="badgePedidosNovos">0</span>
+                    </button>
+                    <button class="admin-tab" data-tab="turmaA">
+                        <span>Turma 3º A</span>
                         <span class="tab-badge" id="badgeA">39</span>
                     </button>
                     <button class="admin-tab" data-tab="turmaB">
-                        <span>🅱 Turma B</span>
+                        <span>Turma 3º B</span>
                         <span class="tab-badge" id="badgeB">34</span>
-                    </button>
-                    <button class="admin-tab" data-tab="todos">
-                        <span>👥 Todos</span>
-                        <span class="tab-badge" id="badgeTodos">73</span>
                     </button>
                 </div>
             </div>
+
             <div class="admin-header-right">
                 <div class="sync-pill" id="syncPill">
                     <span class="sync-dot"></span>
                     <span id="syncText">Online</span>
                 </div>
-                <button class="admin-action-btn export-btn" id="btnExport">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                    Exportar
-                </button>
-                <button class="admin-action-btn settings-btn" id="btnSettings">
-                    ⚙️
-                </button>
-                <button class="admin-action-btn logout-btn" id="btnLogout" title="Sair">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                </button>
+                <button class="admin-action-btn export-btn" id="btnExport">Exportar Relatórios</button>
+                <button class="admin-action-btn settings-btn" id="btnSettings">Configurações</button>
+                <button class="admin-action-btn logout-btn" id="btnLogout">Sair</button>
             </div>
         </header>
 
-        <!-- Conteúdo principal -->
+        <!-- CONTEÚDO PRINCIPAL -->
         <main class="admin-main">
 
-            <!-- Stats Cards -->
+            <!-- STATS CARDS -->
             <section class="admin-stats" id="adminStats">
                 <div class="a-stat-card">
-                    <div class="a-stat-icon blue">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    </div>
                     <div class="a-stat-info">
-                        <span class="a-stat-label">Total</span>
-                        <span class="a-stat-value" id="statTotal">0</span>
+                        <span class="a-stat-label">Total de Formandos</span>
+                        <span class="a-stat-value" id="statTotal">73</span>
                     </div>
                 </div>
-                <div class="a-stat-card">
-                    <div class="a-stat-icon emerald">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                    </div>
+                <div class="a-stat-card card-gold">
                     <div class="a-stat-info">
-                        <span class="a-stat-label">Aprovadas</span>
+                        <span class="a-stat-label">Músicas Aprovadas</span>
                         <span class="a-stat-value" id="statAprovadas">0</span>
                     </div>
                 </div>
-                <div class="a-stat-card">
-                    <div class="a-stat-icon purple">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
-                    </div>
+                <div class="a-stat-card card-blue">
                     <div class="a-stat-info">
-                        <span class="a-stat-label">Escolhidas</span>
+                        <span class="a-stat-label">Pedidos Novos (Em Análise)</span>
                         <span class="a-stat-value" id="statEscolhidas">0</span>
                     </div>
                 </div>
-                <div class="a-stat-card">
-                    <div class="a-stat-icon amber">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                    </div>
+                <div class="a-stat-card card-silver">
                     <div class="a-stat-info">
-                        <span class="a-stat-label">Pendentes</span>
-                        <span class="a-stat-value" id="statPendentes">0</span>
+                        <span class="a-stat-label">Pendentes de Escolha</span>
+                        <span class="a-stat-value" id="statPendentes">73</span>
                     </div>
                 </div>
             </section>
 
-            <!-- Controls -->
+            <!-- CONTROLES DE BUSCA E FILTROS -->
             <section class="admin-controls">
                 <div class="admin-search-wrap">
-                    <svg class="admin-search-ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-                    <input type="text" id="adminSearchInput" placeholder="Buscar formando, música, artista...">
+                    <input type="text" id="adminSearchInput" placeholder="Filtrar por nome do formando, música ou artista...">
                 </div>
                 <div class="admin-controls-right">
                     <select id="adminFilterStatus" class="admin-filter-select">
                         <option value="todos">Todos os Status</option>
-                        <option value="PENDENTE">🟡 Pendente</option>
-                        <option value="ESCOLHIDO">🔵 Escolhido</option>
-                        <option value="APROVADO">🟢 Aprovado</option>
+                        <option value="ESCOLHIDO">Pedidos Novos (Em Análise)</option>
+                        <option value="APROVADO">Aprovados</option>
+                        <option value="PENDENTE">Pendentes</option>
                     </select>
                     <select id="adminSortOrder" class="admin-filter-select">
-                        <option value="nome-asc">Nome A→Z</option>
-                        <option value="nome-desc">Nome Z→A</option>
-                        <option value="recente">Mais recentes</option>
-                        <option value="status">Por status</option>
+                        <option value="nome-asc">Ordem: Nome A-Z</option>
+                        <option value="nome-desc">Ordem: Nome Z-A</option>
+                        <option value="recente">Ordem: Recentes</option>
                     </select>
-                    <button class="btn-add-formando" id="btnAddFormando">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        Novo Formando
-                    </button>
+                    <button class="btn-add-formando" id="btnAddFormando">+ Novo Formando</button>
                 </div>
             </section>
 
-            <!-- Grid de Formandos -->
+            <!-- GRID DE FORMANDOS -->
             <section class="admin-grid" id="adminGrid">
                 <div class="loading-state">
-                    <div class="loading-spinner"></div>
-                    <p>Carregando formandos...</p>
+                    <p>Carregando dados dos formandos...</p>
                 </div>
             </section>
 
         </main>
     </div>
 
-    <!-- ===== MODAL: Editar / Adicionar Formando ===== -->
+    <!-- MODAL DE EDIÇÃO DO FORMANDO -->
     <div class="modal-overlay" id="formandoModalOverlay">
         <div class="modal-box modal-large">
             <div class="modal-top">
                 <div>
-                    <h3 class="modal-box-title" id="modalBoxTitle">Editar Formando</h3>
-                    <p class="modal-box-sub" id="modalBoxSub">Gerencie a música e o trecho</p>
+                    <h3 class="modal-box-title" id="modalBoxTitle">Gerenciar Formando</h3>
+                    <p class="modal-box-sub" id="modalBoxSub">Ajuste os dados e a música de entrada</p>
                 </div>
                 <button class="modal-close-btn" id="btnCloseFormModal">✕</button>
-            </div>
-
-            <!-- Tabs do modal -->
-            <div class="modal-inner-tabs">
-                <button class="modal-inner-tab active" data-modal-tab="info">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                    Informações
-                </button>
-                <button class="modal-inner-tab" data-modal-tab="cutter">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
-                    YouTube &amp; Cortador
-                </button>
             </div>
 
             <form id="formandoEditForm">
                 <div class="modal-body-scroll">
                     <input type="hidden" id="editFormandoId">
 
-                    <!-- ABA: INFORMAÇÕES -->
-                    <div class="modal-pane active" id="pane-info">
-                        <div class="form-row-2">
-                            <div class="form-field" style="flex:2;">
-                                <label>Nome do Formando *</label>
-                                <input type="text" id="editName" placeholder="Nome completo" required>
-                            </div>
-                            <div class="form-field">
-                                <label>Turma *</label>
-                                <select id="editTurma" required>
-                                    <option value="A">3º Ano A</option>
-                                    <option value="B">3º Ano B</option>
-                                </select>
-                            </div>
+                    <div class="form-row-2">
+                        <div class="form-field" style="flex:2;">
+                            <label>Nome do Formando *</label>
+                            <input type="text" id="editName" placeholder="Nome completo" required>
                         </div>
-
-                        <div class="form-row-2">
-                            <div class="form-field">
-                                <label>Nome da Música</label>
-                                <input type="text" id="editMusicTitle" placeholder="Ex: Viva La Vida">
-                            </div>
-                            <div class="form-field">
-                                <label>Artista / Banda</label>
-                                <input type="text" id="editMusicArtist" placeholder="Ex: Coldplay">
-                            </div>
-                        </div>
-
                         <div class="form-field">
-                            <label>Link do YouTube</label>
-                            <div class="field-with-action">
-                                <input type="url" id="editMusicLink" placeholder="https://www.youtube.com/watch?v=...">
-                                <button type="button" class="field-action-btn" id="btnEditGoToCutter">🎬 Cortador</button>
-                            </div>
-                            <div class="auto-det-badge" id="editAutoDetBadge" style="display:none;"></div>
-                        </div>
-
-                        <div class="form-field">
-                            <label>Link Direto MP3 (Opcional)</label>
-                            <input type="url" id="editMusicMp3" placeholder="https://exemplo.com/audio.mp3">
-                            <div id="editMp3PlayerWrap" style="display:none; margin-top:8px;">
-                                <audio id="editMp3Player" controls style="width:100%; height:36px; border-radius:6px;"></audio>
-                            </div>
-                        </div>
-
-                        <div class="form-row-2">
-                            <div class="form-field">
-                                <label>Início do Trecho</label>
-                                <input type="text" id="editSnippetStart" placeholder="Ex: 0:40 ou 40">
-                            </div>
-                            <div class="form-field">
-                                <label>Fim do Trecho</label>
-                                <input type="text" id="editSnippetEnd" placeholder="Ex: 1:15 ou 75">
-                            </div>
-                        </div>
-
-                        <div class="form-field">
-                            <label>Status da Escolha *</label>
-                            <select id="editStatus" required>
-                                <option value="PENDENTE">🟡 Pendente</option>
-                                <option value="ESCOLHIDO">🔵 Escolhido (Aguardando Aprovação)</option>
-                                <option value="APROVADO">🟢 Aprovado (Música Confirmada)</option>
+                            <label>Turma *</label>
+                            <select id="editTurma" required>
+                                <option value="A">3º Ano A</option>
+                                <option value="B">3º Ano B</option>
                             </select>
                         </div>
                     </div>
 
-                    <!-- ABA: CUTTER -->
-                    <div class="modal-pane" id="pane-cutter">
-                        <div class="cutter-url-bar">
-                            <input type="text" id="cutterUrlInput" placeholder="Cole o link do YouTube...">
-                            <button type="button" class="btn-cutter-load" id="btnCutterLoad">▶ Carregar</button>
-                            <button type="button" class="btn-cutter-search" id="btnCutterSearch">🔍</button>
+                    <div class="form-row-2">
+                        <div class="form-field">
+                            <label>Nome da Música</label>
+                            <input type="text" id="editMusicTitle" placeholder="Ex: Viva La Vida">
                         </div>
-                        <div class="auto-det-badge" id="cutterAutoDetBadge" style="display:none; margin-bottom:12px;"></div>
+                        <div class="form-field">
+                            <label>Artista ou Banda</label>
+                            <input type="text" id="editMusicArtist" placeholder="Ex: Coldplay">
+                        </div>
+                    </div>
 
-                        <div class="cutter-player-area">
-                            <div id="cutterPlaceholder" class="cutter-ph">
-                                <div class="cutter-ph-icon">🎬</div>
-                                <h4>Nenhum vídeo carregado</h4>
-                                <p>Cole o link acima e clique em Carregar</p>
-                            </div>
-                            <div id="cutterYtTarget" style="display:none; width:100%; height:100%;"></div>
+                    <div class="form-field">
+                        <label>Link do YouTube</label>
+                        <div class="field-with-action">
+                            <input type="url" id="editMusicLink" placeholder="https://www.youtube.com/watch?v=...">
+                            <button type="button" class="field-action-btn" id="btnEditLoadYt">Carregar no Player</button>
                         </div>
+                    </div>
 
-                        <div class="cutter-controls">
-                            <div class="cutter-time">
-                                <span class="cutter-time-label">Tempo:</span>
-                                <span class="cutter-time-val" id="cutterLiveTime">0:00</span>
-                            </div>
-                            <div class="cutter-stamp-row">
-                                <button type="button" class="btn-stamp" id="btnSetStart">
-                                    ⏱ Marcar Início (<span id="previewStart">0:00</span>)
-                                </button>
-                                <button type="button" class="btn-stamp" id="btnSetEnd">
-                                    ⏱ Marcar Fim (<span id="previewEnd">0:00</span>)
-                                </button>
-                            </div>
-                            <div class="cutter-fields-row">
-                                <div class="cutter-field-group">
-                                    <span>Início:</span>
-                                    <input type="text" id="cutterStart" placeholder="0:00">
-                                </div>
-                                <div class="cutter-dur-badge" id="cutterDurBadge">Duração: 0s</div>
-                                <div class="cutter-field-group">
-                                    <span>Fim:</span>
-                                    <input type="text" id="cutterEnd" placeholder="0:30">
-                                </div>
-                            </div>
-                            <div class="cutter-test-row">
-                                <button type="button" class="btn-test-snippet" id="btnTestSnippet">🎧 Ouvir Trecho</button>
-                                <button type="button" class="btn-stop-snippet" id="btnStopSnippet">⏹ Parar</button>
-                            </div>
+                    <!-- Reprodutor no Modal -->
+                    <div id="adminModalPlayerArea" style="display:none; margin-bottom: 16px;">
+                        <div style="aspect-ratio: 16/9; width: 100%; border-radius: 10px; overflow: hidden; background: #000;">
+                            <div id="adminModalYtTarget" style="width:100%; height:100%;"></div>
                         </div>
+                    </div>
+
+                    <div class="form-row-2">
+                        <div class="form-field">
+                            <label>Início do Trecho</label>
+                            <input type="text" id="editSnippetStart" placeholder="Ex: 0:40">
+                        </div>
+                        <div class="form-field">
+                            <label>Fim do Trecho (45s)</label>
+                            <input type="text" id="editSnippetEnd" placeholder="Ex: 1:25">
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Status da Escolha *</label>
+                        <select id="editStatus" required>
+                            <option value="PENDENTE">Pendente</option>
+                            <option value="ESCOLHIDO">Pedido Novo (Em Análise)</option>
+                            <option value="APROVADO">Aprovado (Confirmado)</option>
+                        </select>
                     </div>
                 </div>
 
                 <div class="modal-footer-actions">
                     <button type="button" class="btn-modal-cancel" id="btnCancelFormModal">Cancelar</button>
-                    <button type="submit" class="btn-modal-save" id="btnSaveFormModal">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                        Salvar
-                    </button>
+                    <button type="submit" class="btn-modal-save" id="btnSaveFormModal">Salvar Dados</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- ===== MODAL: Exportação ===== -->
+    <!-- MODAL DE EXPORTAÇÃO -->
     <div class="modal-overlay" id="exportModalOverlay">
         <div class="modal-box modal-medium">
             <div class="modal-top">
                 <div>
-                    <h3 class="modal-box-title">📊 Exportar Dados</h3>
-                    <p class="modal-box-sub">Escolha o formato de exportação</p>
+                    <h3 class="modal-box-title">Exportação de Relatórios</h3>
+                    <p class="modal-box-sub">Gere documentos formatados das músicas escolhidas</p>
                 </div>
                 <button class="modal-close-btn" id="btnCloseExportModal">✕</button>
             </div>
             <div class="modal-body-scroll">
-                <div class="export-filter-row">
-                    <div class="form-field">
-                        <label>Turma:</label>
-                        <select id="expFilterTurma" class="admin-filter-select">
-                            <option value="todos">Ambas (A e B)</option>
-                            <option value="A">Apenas Turma A</option>
-                            <option value="B">Apenas Turma B</option>
-                        </select>
-                    </div>
-                    <div class="form-field">
-                        <label>Status:</label>
-                        <select id="expFilterStatus" class="admin-filter-select">
-                            <option value="todos">Todos</option>
-                            <option value="APROVADO">🟢 Aprovados</option>
-                            <option value="ESCOLHIDO">🔵 Escolhidos</option>
-                            <option value="PENDENTE">🟡 Pendentes</option>
-                        </select>
-                    </div>
-                </div>
-
                 <div class="export-options-grid">
                     <button class="export-opt-btn" id="expTxt">
-                        <div class="exp-icon">📄</div>
                         <div class="exp-info">
-                            <strong>Lista TXT</strong>
-                            <span>Documento formatado por turma</span>
+                            <strong>Lista em Arquivo TXT</strong>
+                            <span>Documento completo formatado</span>
                         </div>
                     </button>
                     <button class="export-opt-btn" id="expCsv">
-                        <div class="exp-icon">📊</div>
                         <div class="exp-info">
-                            <strong>Planilha CSV</strong>
-                            <span>Compatível com Excel / Sheets</span>
+                            <strong>Planilha Excel / CSV</strong>
+                            <span>Planilha pronta com todas as colunas</span>
                         </div>
                     </button>
                     <button class="export-opt-btn" id="expWhatsapp">
-                        <div class="exp-icon">💬</div>
                         <div class="exp-info">
-                            <strong>WhatsApp</strong>
-                            <span>Copiar mensagem formatada</span>
+                            <strong>Copiar para WhatsApp</strong>
+                            <span>Texto limpo para mensagens de grupo</span>
                         </div>
                     </button>
                     <button class="export-opt-btn" id="expPrint">
-                        <div class="exp-icon">🖨️</div>
                         <div class="exp-info">
-                            <strong>Imprimir / PDF</strong>
-                            <span>Visualização para impressão A4</span>
+                            <strong>Imprimir / Salvar PDF</strong>
+                            <span>Visualização A4 limpa para impressão</span>
                         </div>
                     </button>
-                    <button class="export-opt-btn" id="expJson">
-                        <div class="exp-icon">💾</div>
-                        <div class="exp-info">
-                            <strong>Backup JSON</strong>
-                            <span>Dados completos para importação</span>
-                        </div>
-                    </button>
-                    <div class="export-opt-btn import-slot">
-                        <div class="exp-icon">📥</div>
-                        <div class="exp-info">
-                            <strong>Importar JSON</strong>
-                            <span>Restaurar dados de backup</span>
-                        </div>
-                        <input type="file" id="importFileInput" accept=".json" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
-                    </div>
-                </div>
-
-                <div class="export-preview-wrap">
-                    <div class="exp-preview-header">
-                        <span>Pré-visualização</span>
-                        <span id="expPreviewCount">0 formandos</span>
-                    </div>
-                    <textarea id="expPreviewArea" readonly rows="8" placeholder="Selecione turma e status para ver pré-visualização..."></textarea>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- ===== MODAL: Configurações ===== -->
+    <!-- MODAL DE CONFIGURAÇÃO (SENHA) -->
     <div class="modal-overlay" id="settingsModalOverlay">
         <div class="modal-box modal-compact">
             <div class="modal-top">
                 <div>
-                    <h3 class="modal-box-title">⚙️ Configurações</h3>
-                    <p class="modal-box-sub">Alterar senha de administrador</p>
+                    <h3 class="modal-box-title">Alterar Senha de Admin</h3>
                 </div>
                 <button class="modal-close-btn" id="btnCloseSettingsModal">✕</button>
             </div>
@@ -438,47 +297,38 @@
                     </div>
                     <div class="form-field">
                         <label>Confirmar Nova Senha *</label>
-                        <input type="password" id="confPassInput" placeholder="Repita a nova senha" required>
+                        <input type="password" id="confPassInput" placeholder="Confirme a nova senha" required>
                     </div>
                     <div class="change-pass-msg" id="changePassMsg" style="display:none;"></div>
                     <div class="modal-footer-actions">
                         <button type="button" class="btn-modal-cancel" id="btnCancelSettings">Cancelar</button>
-                        <button type="submit" class="btn-modal-save">Salvar Senha</button>
+                        <button type="submit" class="btn-modal-save">Salvar Nova Senha</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- Player Flutuante (Dock) -->
+    <!-- PLAYER FLUTUANTE GLOBAL -->
     <div class="player-dock" id="playerDock">
         <div class="player-yt-wrap">
             <div id="adminYoutubePlayerTarget"></div>
         </div>
         <div class="player-info">
-            <div class="player-title" id="playerDockTitle">—</div>
-            <div class="player-meta" id="playerDockMeta">—</div>
+            <div class="player-title" id="playerDockTitle">Música</div>
+            <div class="player-meta" id="playerDockMeta">Artista • Formando</div>
             <div class="player-progress">
                 <div class="player-progress-bar" id="playerProgressBar"></div>
             </div>
         </div>
         <div class="player-actions">
-            <button class="player-btn" id="playerPlayPauseBtn">
-                <svg id="playerPlayIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                <svg id="playerPauseIcon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-            </button>
-            <button class="player-btn player-close" id="playerCloseBtn">✕</button>
+            <button class="player-btn" id="playerCloseBtn">✕</button>
         </div>
     </div>
 
-    <!-- Toast -->
-    <div class="toast" id="toast">
-        <span class="toast-icon" id="toastIcon">✓</span>
-        <span class="toast-text" id="toastText">OK</span>
-    </div>
+    <div class="toast" id="toast">Operação realizada com sucesso!</div>
 
     <script src="https://www.youtube.com/iframe_api"></script>
     <script src="js/admin.js"></script>
 </body>
 </html>
-
