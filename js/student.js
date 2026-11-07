@@ -78,18 +78,45 @@ function showToast(msg) {
 
 // Carregar Dados
 async function carregarDados() {
+    // 1. Tenta API do servidor local
     try {
         const res = await fetch(`/api/formandos?t=${Date.now()}`);
         if (res.ok) {
             todosFormandos = await res.json();
+            localStorage.setItem('formando_musix_data_v2', JSON.stringify(todosFormandos));
             return;
         }
     } catch (e) {}
 
+    // 2. Tenta arquivo estático data/formandos.json (GitHub Pages)
     try {
         const res2 = await fetch(`data/formandos.json?t=${Date.now()}`);
         if (res2.ok) {
             todosFormandos = await res2.json();
+            // Mescla com alterações salvas localmente
+            const local = localStorage.getItem('formando_musix_data_v2');
+            if (local) {
+                try {
+                    const localData = JSON.parse(local);
+                    if (Array.isArray(localData)) {
+                        localData.forEach(item => {
+                            const idx = todosFormandos.findIndex(f => f.name === item.name && f.turma === item.turma);
+                            if (idx !== -1 && item.musicTitle) {
+                                todosFormandos[idx] = item;
+                            }
+                        });
+                    }
+                } catch(err) {}
+            }
+            return;
+        }
+    } catch (e) {}
+
+    // 3. Fallback puro LocalStorage
+    try {
+        const local = localStorage.getItem('formando_musix_data_v2');
+        if (local) {
+            todosFormandos = JSON.parse(local);
         }
     } catch (e) {}
 }
