@@ -137,14 +137,29 @@ const Data = {
             const res = await fetch(`/api/formandos?t=${Date.now()}`);
             if (res.ok) {
                 this.formandos = await res.json();
-                return;
             }
         } catch(e) {}
 
-        try {
-            const res2 = await fetch(`data/formandos.json?t=${Date.now()}`);
-            if (res2.ok) this.formandos = await res2.json();
-        } catch(e) {}
+        if (this.formandos.length === 0) {
+            try {
+                const res2 = await fetch(`data/formandos.json?t=${Date.now()}`);
+                if (res2.ok) this.formandos = await res2.json();
+            } catch(e) {}
+        }
+
+        // Sincroniza com as escolhas em nuvem
+        if (window.CloudSync) {
+            const cloud = await window.CloudSync.fetchCloudChoices();
+            if (cloud && typeof cloud === 'object') {
+                Object.values(cloud).forEach(item => {
+                    const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+                    const idx = this.formandos.findIndex(f => norm(f.name) === norm(item.name) && f.turma === item.turma);
+                    if (idx !== -1 && item.musicTitle) {
+                        this.formandos[idx] = { ...this.formandos[idx], ...item };
+                    }
+                });
+            }
+        }
     },
 
     async save() {
@@ -163,6 +178,7 @@ const Data = {
         obj.createdAt = new Date().toISOString();
         this.formandos.push(obj);
         this.save();
+        if (window.CloudSync) window.CloudSync.saveStudentToCloud(obj);
     },
 
     update(id, fields) {
@@ -170,6 +186,7 @@ const Data = {
         if (i !== -1) {
             this.formandos[i] = { ...this.formandos[i], ...fields };
             this.save();
+            if (window.CloudSync) window.CloudSync.saveStudentToCloud(this.formandos[i]);
         }
     },
 
@@ -386,6 +403,19 @@ function baixarArquivo(nome, conteudo, tipo) {
 
 // Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
+    // Inicia listener de tempo real
+    if (window.CloudSync) {
+        window.CloudSync.initRealtime((remoteStudent) => {
+            const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+            const idx = Data.formandos.findIndex(f => norm(f.name) === norm(remoteStudent.name) && f.turma === remoteStudent.turma);
+            if (idx !== -1) {
+                Data.formandos[idx] = { ...Data.formandos[idx], ...remoteStudent };
+                renderAll();
+                showToast(`Atualização em tempo real recebida: ${remoteStudent.name}`);
+            }
+        });
+    }
+
     if (Auth.checkSession()) {
         document.getElementById('adminLoginScreen').classList.remove('active');
         document.getElementById('adminPanel').style.display = 'block';

@@ -76,49 +76,55 @@ function showToast(msg) {
     setTimeout(() => t.classList.remove('show'), 3500);
 }
 
-// Carregar Dados
+// Carregar Dados (Servidor Local + Nuvem Global + LocalStorage)
 async function carregarDados() {
-    // 1. Tenta API do servidor local
+    // 1. Carrega a lista base de formandos
     try {
         const res = await fetch(`/api/formandos?t=${Date.now()}`);
         if (res.ok) {
             todosFormandos = await res.json();
-            localStorage.setItem('formando_musix_data_v2', JSON.stringify(todosFormandos));
-            return;
         }
     } catch (e) {}
 
-    // 2. Tenta arquivo estático data/formandos.json (GitHub Pages)
-    try {
-        const res2 = await fetch(`data/formandos.json?t=${Date.now()}`);
-        if (res2.ok) {
-            todosFormandos = await res2.json();
-            // Mescla com alterações salvas localmente
-            const local = localStorage.getItem('formando_musix_data_v2');
-            if (local) {
-                try {
-                    const localData = JSON.parse(local);
-                    if (Array.isArray(localData)) {
-                        localData.forEach(item => {
-                            const idx = todosFormandos.findIndex(f => f.name === item.name && f.turma === item.turma);
-                            if (idx !== -1 && item.musicTitle) {
-                                todosFormandos[idx] = item;
-                            }
-                        });
-                    }
-                } catch(err) {}
+    if (todosFormandos.length === 0) {
+        try {
+            const res2 = await fetch(`data/formandos.json?t=${Date.now()}`);
+            if (res2.ok) {
+                todosFormandos = await res2.json();
             }
-            return;
-        }
-    } catch (e) {}
+        } catch (e) {}
+    }
 
-    // 3. Fallback puro LocalStorage
-    try {
-        const local = localStorage.getItem('formando_musix_data_v2');
-        if (local) {
-            todosFormandos = JSON.parse(local);
+    // 2. Sincroniza com as escolhas mais recentes salvas na Nuvem
+    if (window.CloudSync) {
+        const cloudChoices = await window.CloudSync.fetchCloudChoices();
+        if (cloudChoices && typeof cloudChoices === 'object') {
+            Object.values(cloudChoices).forEach(item => {
+                const idx = todosFormandos.findIndex(f => normalizar(f.name) === normalizar(item.name) && f.turma === item.turma);
+                if (idx !== -1 && item.musicTitle) {
+                    todosFormandos[idx] = { ...todosFormandos[idx], ...item };
+                }
+            });
         }
-    } catch (e) {}
+    }
+
+    // 3. Fallback LocalStorage
+    const local = localStorage.getItem('formando_musix_data_v2');
+    if (local) {
+        try {
+            const localData = JSON.parse(local);
+            if (Array.isArray(localData)) {
+                localData.forEach(item => {
+                    const idx = todosFormandos.findIndex(f => normalizar(f.name) === normalizar(item.name) && f.turma === item.turma);
+                    if (idx !== -1 && !todosFormandos[idx].musicTitle && item.musicTitle) {
+                        todosFormandos[idx] = { ...todosFormandos[idx], ...item };
+                    }
+                });
+            }
+        } catch(err) {}
+    }
+
+    localStorage.setItem('formando_musix_data_v2', JSON.stringify(todosFormandos));
 }
 
 // Renderizar Alunos da Turma
@@ -349,6 +355,20 @@ function gerarCartaoPng() {
 document.addEventListener('DOMContentLoaded', async () => {
     await carregarDados();
 
+    // Inicia escuta em tempo real da Nuvem
+    if (window.CloudSync) {
+        window.CloudSync.initRealtime((remoteStudent) => {
+            const idx = todosFormandos.findIndex(f => normalizar(f.name) === normalizar(remoteStudent.name) && f.turma === remoteStudent.turma);
+            if (idx !== -1) {
+                todosFormandos[idx] = { ...todosFormandos[idx], ...remoteStudent };
+                renderAlunos(document.getElementById('searchInput')?.value || '');
+                if (currentAluno && normalizar(currentAluno.name) === normalizar(remoteStudent.name)) {
+                    currentAluno = todosFormandos[idx];
+                }
+            }
+        });
+    }
+
     // Botões de Turma
     document.querySelectorAll('.turma-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -499,6 +519,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             todosFormandos[idx] = atualizado;
         } else {
             todosFormandos.push(atualizado);
+        }
+
+        // Salva na Nuvem Global e emite broadcast em tempo real
+        if (window.CloudSync) {
+            window.CloudSync.saveStudentToCloud(atualizado);
         }
 
         try {
