@@ -1,18 +1,5 @@
 [
   {
-    "id": "default_2",
-    "name": "Lucas Oliveira Ramos",
-    "turma": "B",
-    "musicTitle": "We Are the Champions",
-    "musicArtist": "Queen",
-    "musicLink": "https://www.youtube.com/watch?v=04854XqcfCY",
-    "musicMp3": "",
-    "snippetStart": "0:30",
-    "snippetEnd": "1:00",
-    "status": "ESCOLHIDO",
-    "createdAt": "2026-11-04T00:00:00.000Z"
-  },
-  {
     "id": "default_4",
     "name": "Gabriel Almeida Lima",
     "turma": "B",
@@ -68,13 +55,13 @@
     "id": "seed_A_analeticiabarbosadasilva",
     "name": "Ana Leticia Barbosa da Silva",
     "turma": "A",
-    "musicTitle": "",
-    "musicArtist": "",
-    "musicLink": "",
+    "musicTitle": "Jardim I Fraternidade São João Paulo II",
+    "musicArtist": "Fraternidade São João Paulo II",
+    "musicLink": "https://youtu.be/bCffspoAA6o?si=NiDiqCj1DJUkjMmD",
     "musicMp3": "",
-    "snippetStart": "",
-    "snippetEnd": "",
-    "status": "PENDENTE",
+    "snippetStart": "3:14",
+    "snippetEnd": "4:08",
+    "status": "APROVADO",
     "createdAt": "2026-11-06T00:00:00.000Z"
   },
   {
@@ -588,13 +575,13 @@
     "id": "seed_B_aryaneleticiadearaujobarboza",
     "name": "Aryane Leticia de Araujo Barboza",
     "turma": "B",
-    "musicTitle": "",
-    "musicArtist": "",
-    "musicLink": "",
+    "musicTitle": "Videoclipe \"AQUI ESTOU\" 💜🎤 | Barbie A Princesa e a PopStar | Filmes da Barbie Em Português",
+    "musicArtist": "Barbie Português",
+    "musicLink": "https://youtu.be/M1pA2MQtw34?is=T4kIx2lOtk0RINMg",
     "musicMp3": "",
-    "snippetStart": "",
-    "snippetEnd": "",
-    "status": "PENDENTE",
+    "snippetStart": "2:39",
+    "snippetEnd": "3:24",
+    "status": "APROVADO",
     "createdAt": "2026-11-06T00:00:00.000Z"
   },
   {
@@ -858,19 +845,6 @@
     "createdAt": "2026-11-06T00:00:00.000Z"
   },
   {
-    "id": "seed_B_luizhenriquepedrosapereiradasilva",
-    "name": "Luiz Henrique Pedrosa Pereira da Silva",
-    "turma": "B",
-    "musicTitle": "",
-    "musicArtist": "",
-    "musicLink": "",
-    "musicMp3": "",
-    "snippetStart": "",
-    "snippetEnd": "",
-    "status": "PENDENTE",
-    "createdAt": "2026-11-06T00:00:00.000Z"
-  },
-  {
     "id": "seed_B_mariaclaraalvespereira",
     "name": "Maria Clara Alves Pereira",
     "turma": "B",
@@ -973,5 +947,17 @@
     "snippetEnd": "",
     "status": "PENDENTE",
     "createdAt": "2026-11-06T00:00:00.000Z"
+  },
+  {
+    "name": "Luiz Henrique Pedrosa Pereira da Silva",
+    "turma": "B",
+    "musicTitle": "",
+    "musicArtist": "",
+    "musicLink": "",
+    "snippetStart": "0:00",
+    "snippetEnd": "0:45",
+    "status": "PENDENTE",
+    "id": "aluno_1794084804919",
+    "createdAt": "2026-11-07T20:53:24.919Z"
   }
 ]

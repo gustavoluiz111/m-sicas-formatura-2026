@@ -149,6 +149,7 @@ const Data = {
 
         // Sincroniza com as escolhas em nuvem
         if (window.CloudSync) {
+            if (!window.CloudSync.db) window.CloudSync.init();
             const cloud = await window.CloudSync.fetchCloudChoices();
             if (cloud && typeof cloud === 'object') {
                 Object.values(cloud).forEach(item => {

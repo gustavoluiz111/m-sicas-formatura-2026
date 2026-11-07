@@ -97,6 +97,7 @@ async function carregarDados() {
 
     // 2. Sincroniza com as escolhas mais recentes salvas na Nuvem
     if (window.CloudSync) {
+        if (!window.CloudSync.db) window.CloudSync.init();
         const cloudChoices = await window.CloudSync.fetchCloudChoices();
         if (cloudChoices && typeof cloudChoices === 'object') {
             Object.values(cloudChoices).forEach(item => {
