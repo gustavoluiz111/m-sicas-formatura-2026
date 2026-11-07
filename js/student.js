@@ -1,6 +1,6 @@
-// ============================================================
-// student.js — Lógica Oficial Editorial / Fullscreen
-// ============================================================
+// ==========================================================
+// JS DIRETO, SIMPLES E 100% FUNCIONAL
+// ==========================================================
 
 const TURMA_A = [
     "Alicia Nicolly da Silva Souza","Ana Beatriz de Araujo Costa","Ana Julia Trindade Coutinho Ferreira",
@@ -34,487 +34,251 @@ const TURMA_B = [
     "Samyra Cavalcanti do Nascimento Melo","Thayse Milena Santana de Oliveira"
 ];
 
-const AppState = {
-    selectedTurma: null,
-    currentStudent: null,
-    formandos: [],
+let currentTurma = 'A';
+let currentAluno = null;
+let todosFormandos = [];
 
-    async init() {
-        await this.loadData();
-        this.renderStats();
-    },
-
-    async loadData() {
-        try {
-            // Adiciona timestamp para não pegar cache do navegador
-            const res = await fetch(`/api/formandos?t=${Date.now()}`);
-            if (res.ok) {
-                const data = await res.json();
-                if (Array.isArray(data) && data.length > 0) {
-                    this.formandos = data;
-                    return;
-                }
-            }
-        } catch (e) {
-            console.warn("API offline, carregando fallback estático...");
+// Carregar dados salvos
+async function carregarDados() {
+    try {
+        const res = await fetch(`/api/formandos?t=${Date.now()}`);
+        if (res.ok) {
+            todosFormandos = await res.json();
+            return;
         }
+    } catch (e) {}
 
-        try {
-            const resStatic = await fetch(`data/formandos.json?t=${Date.now()}`);
-            if (resStatic.ok) {
-                const data = await resStatic.json();
-                this.formandos = data;
-            }
-        } catch (e) {}
-    },
-
-    normalize(str) {
-        return (str || '')
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .toLowerCase()
-            .trim();
-    },
-
-    getStudentsOfTurma(turma) {
-        const norm = this.normalize;
-        const validList = turma === 'A' ? TURMA_A : TURMA_B;
-
-        return validList.map(name => {
-            const existing = this.formandos.find(f => norm(f.name) === norm(name) && f.turma === turma);
-            if (existing) return existing;
-            return {
-                id: `seed_${turma}_${norm(name).replace(/\s+/g, '_')}`,
-                name: name,
-                turma: turma,
-                musicTitle: '',
-                musicArtist: '',
-                musicLink: '',
-                snippetStart: '',
-                snippetEnd: '',
-                status: 'PENDENTE'
-            };
-        });
-    },
-
-    async saveStudent(studentData) {
-        const norm = this.normalize;
-        const idx = this.formandos.findIndex(f => norm(f.name) === norm(studentData.name) && f.turma === studentData.turma);
-
-        if (idx !== -1) {
-            this.formandos[idx] = { ...this.formandos[idx], ...studentData };
-        } else {
-            this.formandos.push(studentData);
+    try {
+        const res2 = await fetch(`data/formandos.json?t=${Date.now()}`);
+        if (res2.ok) {
+            todosFormandos = await res2.json();
         }
+    } catch (e) {}
+}
 
-        // Tenta salvar via POST no servidor
-        try {
-            const res = await fetch('/api/formandos', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(this.formandos)
-            });
-            if (res.ok) return true;
-        } catch (e) {}
-
-        // Salva no LocalStorage como redundância
-        localStorage.setItem('formando_musix_data_v2', JSON.stringify(this.formandos));
-        return true;
-    }
-};
-
-// ==============================================================
-// HELPERS
-// ==============================================================
-function getInitials(name) {
-    if (!name) return 'FM';
-    const parts = name.trim().split(' ').filter(Boolean);
-    if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
-    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+function normalizar(txt) {
+    return (txt || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
 
 function getYouTubeId(url) {
     if (!url) return null;
-    url = url.trim();
-    if (url.length === 11 && !url.includes('/') && !url.includes('.')) return url;
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-    const match = url.match(regExp);
+    const match = url.trim().match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
 }
 
 function showToast(msg) {
-    const t = document.getElementById('toastMessage');
-    const txt = document.getElementById('toastText');
-    if (!t || !txt) return;
-    txt.textContent = msg;
+    const t = document.getElementById('toast');
+    t.textContent = msg;
     t.classList.add('show');
-    setTimeout(() => {
-        t.classList.remove('show');
-    }, 3500);
+    setTimeout(() => t.classList.remove('show'), 3000);
 }
 
-// ==============================================================
-// NAVEGAÇÃO ENTRE ETAPAS
-// ==============================================================
-function switchStage(stageName) {
-    document.querySelectorAll('.stage-section').forEach(s => s.classList.remove('active'));
+// Renderizar Alunos da Turma
+function renderAlunos(busca = '') {
+    const listaEl = document.getElementById('alunosList');
+    const nomes = currentTurma === 'A' ? TURMA_A : TURMA_B;
+    const q = normalizar(busca);
 
-    if (stageName === 'turma') {
-        document.getElementById('stepTurma').classList.add('active');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    } else if (stageName === 'list') {
-        document.getElementById('stepList').classList.add('active');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-}
+    const filtrados = nomes.filter(nome => normalizar(nome).includes(q));
 
-// ==============================================================
-// RENDERIZAÇÃO DA TABELA / LISTA DE ALUNOS
-// ==============================================================
-function renderStudentsList(query = '') {
-    const listEl = document.getElementById('studentsScrollList');
-    if (!listEl) return;
-
-    const turma = AppState.selectedTurma;
-    let students = AppState.getStudentsOfTurma(turma);
-
-    if (query.trim()) {
-        const qNorm = AppState.normalize(query);
-        students = students.filter(s => 
-            AppState.normalize(s.name).includes(qNorm) || 
-            AppState.normalize(s.musicTitle || '').includes(qNorm) ||
-            AppState.normalize(s.musicArtist || '').includes(qNorm)
-        );
-    }
-
-    // Atualiza Sidebar Stats
-    const total = students.length;
-    const aprovadas = students.filter(s => s.status === 'APROVADO').length;
-    const pendentes = students.filter(s => !s.status || s.status === 'PENDENTE').length;
-
-    document.getElementById('sideStatTotal').textContent = total;
-    document.getElementById('sideStatAprovados').textContent = aprovadas;
-    document.getElementById('sideStatPendentes').textContent = pendentes;
-
-    if (students.length === 0) {
-        listEl.innerHTML = `
-            <div style="padding: 60px 20px; text-align: center; color: var(--text-muted); font-family: var(--font-space);">
-                <div style="font-size: 2.5rem; margin-bottom: 12px;">🔍</div>
-                <h3>Nenhum formando encontrado</h3>
-                <p style="margin-top: 6px; font-size: 0.9rem;">Verifique a grafia do nome digitado.</p>
-            </div>
-        `;
+    if (filtrados.length === 0) {
+        listaEl.innerHTML = `<p style="text-align:center; padding:30px; color:#64748b;">Nenhum formando encontrado com esse nome.</p>`;
         return;
     }
 
-    listEl.innerHTML = students.map(s => {
-        const initials = getInitials(s.name);
-        const hasSong = Boolean(s.musicTitle && s.musicTitle.trim());
-        const status = s.status || 'PENDENTE';
-        
-        const statusLabels = {
-            'PENDENTE': 'PENDENTE',
-            'ESCOLHIDO': 'AGUARDANDO',
-            'APROVADO': 'APROVADO'
-        };
+    listaEl.innerHTML = filtrados.map(nome => {
+        const dados = todosFormandos.find(f => normalizar(f.name) === normalizar(nome) && f.turma === currentTurma) || {};
+        const musica = dados.musicTitle ? `🎵 ${dados.musicTitle}` : 'Nenhuma música escolhida';
+        const status = dados.status || 'PENDENTE';
+        const badgeClass = status === 'APROVADO' ? 'badge-aprovado' : (status === 'ESCOLHIDO' ? 'badge-escolhido' : 'badge-pendente');
+        const statusLabel = status === 'APROVADO' ? 'APROVADO 🟢' : (status === 'ESCOLHIDO' ? 'EM ANÁLISE 🔵' : 'PENDENTE 🟡');
 
         return `
-            <div class="student-row-card" data-student-name="${encodeURIComponent(s.name)}">
-                <div class="student-cell-name">
-                    <div class="student-initials">${initials}</div>
-                    <div class="student-full-name">${s.name}</div>
+            <div class="aluno-item" onclick="abrirModalAluno('${encodeURIComponent(nome)}')">
+                <div class="aluno-info">
+                    <h4>${nome}</h4>
+                    <p>${musica}</p>
                 </div>
-
-                <div class="student-cell-song">
-                    ${hasSong ? `
-                        <div class="song-main-txt">
-                            <span>🎵</span>
-                            <span>${s.musicTitle}</span>
-                        </div>
-                        <div class="song-artist-txt">${s.musicArtist || 'Artista não informado'}</div>
-                    ` : `
-                        <span class="song-empty-txt">Nenhuma música escolhida</span>
-                    `}
-                </div>
-
-                <div class="student-cell-status">
-                    <span class="status-pill-badge ${status}">
-                        <span class="badge-dot"></span>
-                        <span>${statusLabels[status] || status}</span>
-                    </span>
-                </div>
-
-                <div class="student-cell-action">
-                    <button class="btn-open-detail">
-                        ${hasSong ? 'VER DETALHES ↗' : 'ESCOLHER MÚSICA ↗'}
-                    </button>
-                </div>
+                <span class="aluno-status-badge ${badgeClass}">${statusLabel}</span>
             </div>
         `;
     }).join('');
-
-    // Adiciona listener para abrir drawer
-    listEl.querySelectorAll('.student-row-card').forEach(card => {
-        card.addEventListener('click', () => {
-            const name = decodeURIComponent(card.dataset.studentName);
-            const student = students.find(s => s.name === name);
-            if (student) openStudentDrawer(student);
-        });
-    });
 }
 
-// ==============================================================
-// GESTÃO DO DRAWER / MODAL
-// ==============================================================
-function openStudentDrawer(student) {
-    AppState.currentStudent = student;
-
-    // Atualiza cabeçalho do drawer
-    document.getElementById('drawerAvatar').textContent = getInitials(student.name);
-    document.getElementById('drawerUserName').textContent = student.name;
-    document.getElementById('drawerTurmaBadge').textContent = `3º ANO ${student.turma}`;
-
-    // Atualiza status banner
-    const status = student.status || 'PENDENTE';
-    const statusDot = document.querySelector('.status-indicator-dot');
-    const statusHeading = document.getElementById('drawerStatusTitle');
-    const statusSub = document.getElementById('drawerStatusSub');
-    const statusPill = document.getElementById('drawerStatusPill');
-
-    if (status === 'APROVADO') {
-        statusDot.style.background = 'var(--brand-emerald)';
-        statusDot.style.boxShadow = '0 0 10px var(--brand-emerald)';
-        statusHeading.textContent = 'MÚSICA APROVADA';
-        statusSub.textContent = 'Faixa confirmada para o momento de entrada';
-        statusPill.textContent = 'CONFIRMADA 🟢';
-        statusPill.style.color = '#34d399';
-    } else if (status === 'ESCOLHIDO') {
-        statusDot.style.background = 'var(--brand-blue)';
-        statusDot.style.boxShadow = '0 0 10px var(--brand-blue)';
-        statusHeading.textContent = 'EM ANÁLISE';
-        statusSub.textContent = 'Sugestão enviada, aguardando aprovação da comissão';
-        statusPill.textContent = 'AGUARDANDO REVISÃO 🔵';
-        statusPill.style.color = '#93c5fd';
-    } else {
-        statusDot.style.background = 'var(--brand-amber)';
-        statusDot.style.boxShadow = '0 0 10px var(--brand-amber)';
-        statusHeading.textContent = 'PENDENTE';
-        statusSub.textContent = 'Você ainda não possui música registrada';
-        statusPill.textContent = 'SEM MÚSICA 🟡';
-        statusPill.style.color = '#fbbf24';
-    }
-
-    // Exibição da música registrada
-    const songBox = document.getElementById('drawerCurrentSongBox');
-    if (student.musicTitle && student.musicTitle.trim()) {
-        songBox.style.display = 'flex';
-        document.getElementById('drawerSongTitle').textContent = student.musicTitle;
-        document.getElementById('drawerSongArtist').textContent = student.musicArtist || 'Artista não informado';
-        
-        const snippetEl = document.getElementById('drawerSongSnippet');
-        if (student.snippetStart || student.snippetEnd) {
-            snippetEl.style.display = 'inline-block';
-            snippetEl.innerHTML = `⏱ Trecho do refrão: <strong>${student.snippetStart || '0:00'} → ${student.snippetEnd || 'fim'}</strong>`;
-        } else {
-            snippetEl.style.display = 'none';
-        }
-
-        const ytBtn = document.getElementById('drawerSongYoutubeLink');
-        if (student.musicLink) {
-            ytBtn.style.display = 'flex';
-            ytBtn.href = student.musicLink;
-        } else {
-            ytBtn.style.display = 'none';
-        }
-    } else {
-        songBox.style.display = 'none';
-    }
-
-    // Preenche formulário com os valores existentes para facilitar edição
-    document.getElementById('drawerInputLink').value = student.musicLink || '';
-    document.getElementById('drawerInputTitle').value = student.musicTitle || '';
-    document.getElementById('drawerInputArtist').value = student.musicArtist || '';
-    document.getElementById('drawerInputStart').value = student.snippetStart || '';
-    document.getElementById('drawerInputEnd').value = student.snippetEnd || '';
-    
-    document.getElementById('detectStatusMessage').style.display = 'none';
-    document.getElementById('submissionAlert').style.display = 'none';
-
-    // Abre modal
-    document.getElementById('studentProfileDrawer').classList.add('open');
-    document.body.style.overflow = 'hidden';
-}
-
-function closeStudentDrawer() {
-    document.getElementById('studentProfileDrawer').classList.remove('open');
-    document.body.style.overflow = '';
-}
-
-// ==============================================================
-// DETECTOR INTELIGENTE DO YOUTUBE
-// ==============================================================
-async function handleAutoDetect() {
-    const linkInput = document.getElementById('drawerInputLink');
-    const msg = document.getElementById('detectStatusMessage');
-    const url = linkInput.value.trim();
-
-    if (!url) {
-        showToast("Cole o link do YouTube primeiro!");
-        return;
-    }
-
-    const vidId = getYouTubeId(url);
-    if (!vidId) {
-        showToast("Link do YouTube inválido.");
-        return;
-    }
-
-    msg.style.display = 'block';
-    msg.textContent = "⏳ Analisando dados do vídeo...";
-
-    try {
-        const res = await fetch(`/api/youtube-info?url=${encodeURIComponent(url)}`);
-        if (res.ok) {
-            const data = await res.json();
-            if (data.song || data.artist) {
-                if (data.song) document.getElementById('drawerInputTitle').value = data.song;
-                if (data.artist) document.getElementById('drawerInputArtist').value = data.artist;
-                msg.innerHTML = `✨ Reconhecido: <strong>${data.song}</strong> • ${data.artist}`;
-                return;
-            }
-        }
-    } catch (e) {}
-
-    // Fallback noembed
-    try {
-        const res2 = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${vidId}`);
-        if (res2.ok) {
-            const d2 = await res2.json();
-            if (d2.title) {
-                const parts = d2.title.split(/ - | – | — /);
-                const song = parts.length > 1 ? parts[1].trim() : d2.title.trim();
-                const artist = parts.length > 1 ? parts[0].trim() : (d2.author_name || '');
-                document.getElementById('drawerInputTitle').value = song;
-                document.getElementById('drawerInputArtist').value = artist;
-                msg.innerHTML = `✨ Reconhecido: <strong>${song}</strong> • ${artist}`;
-                return;
-            }
-        }
-    } catch (err) {}
-
-    msg.textContent = "💡 Vídeo carregado! Digite o nome da música e o artista abaixo.";
-}
-
-// ==============================================================
-// SUBMISSÃO DO FORMULÁRIO DE ESCOLHA
-// ==============================================================
-async function handleFormSubmit(e) {
-    e.preventDefault();
-    if (!AppState.currentStudent) return;
-
-    const btn = document.getElementById('btnSubmitDrawerForm');
-    const alertBox = document.getElementById('submissionAlert');
-
-    const title = document.getElementById('drawerInputTitle').value.trim();
-    const artist = document.getElementById('drawerInputArtist').value.trim();
-    const link = document.getElementById('drawerInputLink').value.trim();
-    const start = document.getElementById('drawerInputStart').value.trim();
-    const end = document.getElementById('drawerInputEnd').value.trim();
-
-    if (!title) {
-        alert("Por favor, digite o nome da música.");
-        return;
-    }
-
-    btn.disabled = true;
-    btn.innerHTML = `<span>ENVIANDO ESCOLHA...</span>`;
-
-    const updated = {
-        ...AppState.currentStudent,
-        musicTitle: title,
-        musicArtist: artist,
-        musicLink: link,
-        snippetStart: start,
-        snippetEnd: end,
-        status: AppState.currentStudent.status === 'APROVADO' ? 'APROVADO' : 'ESCOLHIDO',
-        updatedAt: new Date().toISOString()
+// Abrir Modal do Aluno
+window.abrirModalAluno = function(nomeEncoded) {
+    const nome = decodeURIComponent(nomeEncoded);
+    const dados = todosFormandos.find(f => normalizar(f.name) === normalizar(nome) && f.turma === currentTurma) || {
+        name: nome,
+        turma: currentTurma,
+        musicTitle: '',
+        musicArtist: '',
+        musicLink: '',
+        snippetStart: '',
+        snippetEnd: '',
+        status: 'PENDENTE'
     };
 
-    const success = await AppState.saveStudent(updated);
+    currentAluno = dados;
 
-    if (success) {
-        alertBox.className = 'submission-alert success';
-        alertBox.innerHTML = `✨ <strong>Música enviada com sucesso!</strong> A comissão já tem acesso à sua escolha.`;
-        alertBox.style.display = 'block';
+    document.getElementById('modalTurmaTag').textContent = `TURMA ${currentTurma}`;
+    document.getElementById('modalAlunoNome').textContent = nome;
 
-        showToast("Escolha salva com sucesso! 🎓");
+    // Situação
+    const sitStatus = document.getElementById('sitStatusTag');
+    const sitTxt = document.getElementById('sitMusicaTxt');
 
-        // Atualiza a visualização do card do aluno e a lista
-        AppState.currentStudent = updated;
-        renderStudentsList(document.getElementById('studentSearchInput').value);
-
-        setTimeout(() => {
-            btn.disabled = false;
-            btn.innerHTML = `<span>SALVAR & ENVIAR MINHA ESCOLHA</span> <span class="btn-arrow">→</span>`;
-            openStudentDrawer(updated);
-        }, 1200);
+    if (dados.status === 'APROVADO') {
+        sitStatus.textContent = 'MÚSICA APROVADA 🟢';
+        sitStatus.style.color = '#34d399';
+        sitTxt.textContent = `${dados.musicTitle} (${dados.musicArtist || 'Artista'})`;
+    } else if (dados.status === 'ESCOLHIDO') {
+        sitStatus.textContent = 'SUGESTÃO EM ANÁLISE 🔵';
+        sitStatus.style.color = '#93c5fd';
+        sitTxt.textContent = `${dados.musicTitle} (${dados.musicArtist || 'Artista'})`;
     } else {
-        alert("Ocorreu um erro ao salvar sua sugestão. Tente novamente.");
-        btn.disabled = false;
-        btn.innerHTML = `<span>SALVAR & ENVIAR MINHA ESCOLHA</span> <span class="btn-arrow">→</span>`;
+        sitStatus.textContent = 'PENDENTE 🟡';
+        sitStatus.style.color = '#fbbf24';
+        sitTxt.textContent = 'Você ainda não enviou sua música.';
     }
+
+    // Formulário
+    document.getElementById('inputYtLink').value = dados.musicLink || '';
+    document.getElementById('inputNomeMusica').value = dados.musicTitle || '';
+    document.getElementById('inputArtista').value = dados.musicArtist || '';
+    document.getElementById('inputInicio').value = dados.snippetStart || '';
+    document.getElementById('inputFim').value = dados.snippetEnd || '';
+    document.getElementById('detectResult').textContent = '';
+
+    document.getElementById('modalAluno').classList.add('open');
+};
+
+function fecharModal() {
+    document.getElementById('modalAluno').classList.remove('open');
 }
 
-// ==============================================================
-// INICIALIZAÇÃO E EVENT LISTENERS
-// ==============================================================
+// Inicialização
 document.addEventListener('DOMContentLoaded', async () => {
-    await AppState.init();
+    await carregarDados();
 
-    // 1. Botões de Seleção de Turma no Hero
-    document.querySelectorAll('.turma-card-modern').forEach(btn => {
+    // Botões Turma A e B
+    document.querySelectorAll('.turma-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-            const turma = btn.dataset.turma;
-            AppState.selectedTurma = turma;
+            currentTurma = btn.dataset.turma;
+            document.getElementById('turmaActiveBadge').textContent = `3º ANO ${currentTurma}`;
+            document.getElementById('searchInput').value = '';
 
-            document.getElementById('sidebarTurmaPill').textContent = `3º ANO ${turma}`;
-            document.getElementById('studentSearchInput').value = '';
-            document.getElementById('clearSearchBtn').style.display = 'none';
+            document.getElementById('stepTurma').classList.remove('active');
+            document.getElementById('stepAlunos').classList.add('active');
 
-            renderStudentsList();
-            switchStage('list');
+            renderAlunos();
         });
     });
 
-    // 2. Voltar para Escolha de Turma
-    document.getElementById('btnBackToHero').addEventListener('click', () => {
-        switchStage('turma');
+    // Voltar para tela de turmas
+    document.getElementById('btnVoltarTurma').addEventListener('click', () => {
+        document.getElementById('stepAlunos').classList.remove('active');
+        document.getElementById('stepTurma').classList.add('active');
     });
 
-    // 3. Campo de Busca com Limpeza Rápida
-    const searchInput = document.getElementById('studentSearchInput');
-    const clearBtn = document.getElementById('clearSearchBtn');
-
-    searchInput.addEventListener('input', () => {
-        const val = searchInput.value;
-        clearBtn.style.display = val ? 'block' : 'none';
-        renderStudentsList(val);
+    // Busca
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+        renderAlunos(e.target.value);
     });
 
-    clearBtn.addEventListener('click', () => {
-        searchInput.value = '';
-        clearBtn.style.display = 'none';
-        renderStudentsList('');
-        searchInput.focus();
+    // Fechar modal
+    document.getElementById('btnFecharModal').addEventListener('click', fecharModal);
+    document.getElementById('modalAluno').addEventListener('click', (e) => {
+        if (e.target.id === 'modalAluno') fecharModal();
     });
 
-    // 4. Fechar Drawer
-    document.getElementById('btnCloseDrawer').addEventListener('click', closeStudentDrawer);
-    document.getElementById('drawerBackdrop').addEventListener('click', closeStudentDrawer);
+    // Detectar YouTube
+    document.getElementById('btnDetectar').addEventListener('click', async () => {
+        const url = document.getElementById('inputYtLink').value.trim();
+        const resEl = document.getElementById('detectResult');
 
-    // 5. Detectar dados no YouTube
-    document.getElementById('btnAutoDetect').addEventListener('click', handleAutoDetect);
+        if (!url) {
+            alert('Cole o link do YouTube primeiro!');
+            return;
+        }
 
-    // 6. Enviar formulário
-    document.getElementById('drawerSuggestionForm').addEventListener('submit', handleFormSubmit);
+        resEl.textContent = 'Buscando dados da música...';
+
+        try {
+            const res = await fetch(`/api/youtube-info?url=${encodeURIComponent(url)}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.song) document.getElementById('inputNomeMusica').value = data.song;
+                if (data.artist) document.getElementById('inputArtista').value = data.artist;
+                resEl.textContent = `✨ Reconhecido: ${data.song || ''} ${data.artist ? '• ' + data.artist : ''}`;
+                return;
+            }
+        } catch (e) {}
+
+        const vidId = getYouTubeId(url);
+        if (vidId) {
+            try {
+                const r2 = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${vidId}`);
+                if (r2.ok) {
+                    const d2 = await r2.json();
+                    if (d2.title) {
+                        const parts = d2.title.split(/ - | – | — /);
+                        document.getElementById('inputNomeMusica').value = parts.length > 1 ? parts[1].trim() : d2.title;
+                        document.getElementById('inputArtista').value = parts.length > 1 ? parts[0].trim() : (d2.author_name || '');
+                        resEl.textContent = '✨ Reconhecido!';
+                        return;
+                    }
+                }
+            } catch (err) {}
+        }
+
+        resEl.textContent = 'Preencha o nome da música e artista abaixo.';
+    });
+
+    // Salvar formulário
+    document.getElementById('formMusica').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!currentAluno) return;
+
+        const musica = document.getElementById('inputNomeMusica').value.trim();
+        const artista = document.getElementById('inputArtista').value.trim();
+        const link = document.getElementById('inputYtLink').value.trim();
+        const inicio = document.getElementById('inputInicio').value.trim();
+        const fim = document.getElementById('inputFim').value.trim();
+
+        const atualizado = {
+            id: currentAluno.id || `seed_${currentTurma}_${normalizar(currentAluno.name).replace(/\s+/g, '_')}`,
+            name: currentAluno.name,
+            turma: currentTurma,
+            musicTitle: musica,
+            musicArtist: artista,
+            musicLink: link,
+            snippetStart: inicio,
+            snippetEnd: fim,
+            status: currentAluno.status === 'APROVADO' ? 'APROVADO' : 'ESCOLHIDO',
+            updatedAt: new Date().toISOString()
+        };
+
+        const idx = todosFormandos.findIndex(f => normalizar(f.name) === normalizar(atualizado.name) && f.turma === currentTurma);
+        if (idx !== -1) {
+            todosFormandos[idx] = atualizado;
+        } else {
+            todosFormandos.push(atualizado);
+        }
+
+        try {
+            await fetch('/api/formandos', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(todosFormandos)
+            });
+        } catch (e) {}
+
+        localStorage.setItem('formando_musix_data_v2', JSON.stringify(todosFormandos));
+
+        fecharModal();
+        renderAlunos(document.getElementById('searchInput').value);
+        showToast('Música salva com sucesso! ✓');
+    });
 });
