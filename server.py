@@ -15,8 +15,8 @@ CONFIG_FILE = os.path.join(DATA_DIR, 'config.json')
 os.makedirs(DATA_DIR, exist_ok=True)
 
 DEFAULT_CONFIG = {
-    # Senha padrão: admin2026
-    "admin_password_hash": hashlib.sha256("admin2026".encode('utf-8')).hexdigest()
+    # Senha padrão atualizada para o hash de: 121415gugu
+    "admin_password_hash": "f25ad90715f74930e74f0d65f3381abadca48c52decad495733065b43dbd6df0"
 }
 
 def load_config():

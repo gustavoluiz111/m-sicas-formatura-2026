@@ -5,7 +5,9 @@
 const Auth = {
     tokenKey: 'formando_musix_admin_token',
     localPassKey: 'formando_musix_admin_local_pw',
-    defaultHash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
+    defaultHash: 'f25ad90715f74930e74f0d65f3381abadca48c52decad495733065b43dbd6df0',
+    failedAttemptsKey: 'admin_failed_attempts',
+    lockoutUntilKey: 'admin_lockout_until',
     isAuthenticated: false,
 
     async hash(str) {
@@ -13,13 +15,57 @@ const Auth = {
         return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
     },
 
+    checkLockout() {
+        const lockout = localStorage.getItem(this.lockoutUntilKey);
+        if (lockout) {
+            const remaining = parseInt(lockout, 10) - Date.now();
+            if (remaining > 0) {
+                const mins = Math.ceil(remaining / 60000);
+                return `Painel bloqueado por tentativas excessivas. Tente novamente em ${mins} minuto(s).`;
+            } else {
+                localStorage.removeItem(this.lockoutUntilKey);
+                localStorage.removeItem(this.failedAttemptsKey);
+            }
+        }
+        return null;
+    },
+
+    registerFailedAttempt() {
+        let attempts = parseInt(localStorage.getItem(this.failedAttemptsKey) || '0', 10) + 1;
+        localStorage.setItem(this.failedAttemptsKey, attempts.toString());
+        if (attempts >= 5) {
+            // Bloqueio de 15 minutos após 5 erros
+            const lockUntil = Date.now() + (15 * 60 * 1000);
+            localStorage.setItem(this.lockoutUntilKey, lockUntil.toString());
+            return 'Muitas tentativas incorretas. Painel bloqueado por 15 minutos.';
+        }
+        return `Senha incorreta. Tentativa ${attempts} de 5.`;
+    },
+
+    resetFailedAttempts() {
+        localStorage.removeItem(this.failedAttemptsKey);
+        localStorage.removeItem(this.lockoutUntilKey);
+    },
+
     checkSession() {
-        const token = sessionStorage.getItem(this.tokenKey) || localStorage.getItem(this.tokenKey);
-        if (token) this.isAuthenticated = true;
+        const token = sessionStorage.getItem(this.tokenKey);
+        const validHash = localStorage.getItem(this.localPassKey) || this.defaultHash;
+        if (token && token === validHash) {
+            this.isAuthenticated = true;
+        } else {
+            sessionStorage.removeItem(this.tokenKey);
+            localStorage.removeItem(this.tokenKey);
+            this.isAuthenticated = false;
+        }
         return this.isAuthenticated;
     },
 
     async login(password) {
+        const lockMsg = this.checkLockout();
+        if (lockMsg) {
+            return { ok: false, msg: lockMsg };
+        }
+
         try {
             const res = await fetch('/api/admin-login', {
                 method: 'POST',
@@ -30,9 +76,9 @@ const Auth = {
                 const data = await res.json();
                 if (data.success) {
                     sessionStorage.setItem(this.tokenKey, data.token);
-                    localStorage.setItem(this.tokenKey, data.token);
                     this.isAuthenticated = true;
-                    return true;
+                    this.resetFailedAttempts();
+                    return { ok: true };
                 }
             }
         } catch(e) {}
@@ -41,11 +87,13 @@ const Auth = {
         const stored = localStorage.getItem(this.localPassKey) || this.defaultHash;
         if (entered === stored) {
             sessionStorage.setItem(this.tokenKey, entered);
-            localStorage.setItem(this.tokenKey, entered);
             this.isAuthenticated = true;
-            return true;
+            this.resetFailedAttempts();
+            return { ok: true };
         }
-        return false;
+
+        const failMsg = this.registerFailedAttempt();
+        return { ok: false, msg: failMsg };
     },
 
     async changePassword(currentPw, newPw) {
@@ -347,14 +395,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const pw = document.getElementById('adminPassInput').value;
-            const ok = await Auth.login(pw);
-            if (ok) {
+            const res = await Auth.login(pw);
+            const errEl = document.getElementById('loginError');
+
+            if (res.ok) {
                 document.getElementById('adminLoginScreen').classList.remove('active');
                 document.getElementById('adminPanel').style.display = 'block';
                 await Data.load();
                 renderAll();
             } else {
-                document.getElementById('loginError').style.display = 'block';
+                errEl.textContent = res.msg || 'Senha incorreta. Tente novamente.';
+                errEl.style.display = 'block';
             }
         });
 
