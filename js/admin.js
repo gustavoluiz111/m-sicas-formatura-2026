@@ -282,6 +282,7 @@ window.excluirFormando = function(id) {
 
 window.editarFormando = function(id) {
     const f = id ? Data.getById(id) : null;
+    // Inicializa campos
     document.getElementById('editFormandoId').value = id || '';
     document.getElementById('editName').value = f?.name || '';
     document.getElementById('editTurma').value = f?.turma || 'A';
@@ -291,6 +292,18 @@ window.editarFormando = function(id) {
     document.getElementById('editSnippetStart').value = f?.snippetStart || '0:00';
     document.getElementById('editSnippetEnd').value = f?.snippetEnd || '0:45';
     document.getElementById('editStatus').value = f?.status || 'PENDENTE';
+
+    const resEl = document.getElementById('editDetectResult');
+    if (resEl) resEl.textContent = '';
+
+    const playerArea = document.getElementById('adminModalPlayerArea');
+    if (f?.musicLink && getYouTubeId(f.musicLink)) {
+        playerArea.style.display = 'block';
+        playerArea.innerHTML = `<iframe style="width:100%; height:260px; border-radius:10px; border:none;" src="https://www.youtube.com/embed/${getYouTubeId(f.musicLink)}" allowfullscreen></iframe>`;
+    } else {
+        playerArea.style.display = 'none';
+        playerArea.innerHTML = '';
+    }
 
     document.getElementById('formandoModalOverlay').classList.add('active');
 };
@@ -368,6 +381,60 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Botão Novo Formando
     document.getElementById('btnAddFormando').addEventListener('click', () => editarFormando(null));
+
+    // Botão Carregar no Player e Detectar no Modal Admin
+    const detectarYtAdmin = async () => {
+        const url = document.getElementById('editMusicLink').value.trim();
+        const resEl = document.getElementById('editDetectResult');
+        if (!url) return;
+
+        if (resEl) resEl.textContent = 'Detectando título e cantor...';
+
+        try {
+            const res = await fetch(`/api/youtube-info?url=${encodeURIComponent(url)}`);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.song) document.getElementById('editMusicTitle').value = data.song;
+                if (data.artist) document.getElementById('editMusicArtist').value = data.artist;
+                if (resEl) resEl.textContent = `Identificado: ${data.song || ''} ${data.artist ? '• ' + data.artist : ''}`;
+                return;
+            }
+        } catch (e) {}
+
+        const vidId = getYouTubeId(url);
+        if (vidId) {
+            try {
+                const r2 = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${vidId}`);
+                if (r2.ok) {
+                    const d2 = await r2.json();
+                    if (d2.title) {
+                        const parts = d2.title.split(/ - | – | — /);
+                        document.getElementById('editMusicTitle').value = parts.length > 1 ? parts[1].trim() : d2.title;
+                        document.getElementById('editMusicArtist').value = parts.length > 1 ? parts[0].trim() : (d2.author_name || '');
+                        if (resEl) resEl.textContent = 'Identificado com sucesso!';
+                        return;
+                    }
+                }
+            } catch(err) {}
+        }
+        if (resEl) resEl.textContent = 'Link carregado. Preencha ou confirme os campos abaixo.';
+    };
+
+    document.getElementById('btnEditDetectar')?.addEventListener('click', detectarYtAdmin);
+    document.getElementById('editMusicLink')?.addEventListener('change', detectarYtAdmin);
+
+    document.getElementById('btnEditLoadYt')?.addEventListener('click', () => {
+        const url = document.getElementById('editMusicLink').value.trim();
+        const vidId = getYouTubeId(url);
+        if (!vidId) {
+            alert('Cole um link válido do YouTube primeiro.');
+            return;
+        }
+        detectarYtAdmin();
+        const playerArea = document.getElementById('adminModalPlayerArea');
+        playerArea.style.display = 'block';
+        playerArea.innerHTML = `<iframe style="width:100%; height:260px; border-radius:10px; border:none;" src="https://www.youtube.com/embed/${vidId}?autoplay=1" allow="autoplay" allowfullscreen></iframe>`;
+    });
 
     // Fechar Modais
     document.getElementById('btnCloseFormModal').addEventListener('click', () => document.getElementById('formandoModalOverlay').classList.remove('active'));
