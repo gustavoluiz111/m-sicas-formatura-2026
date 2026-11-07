@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Músicas de Formatura 2026 · 3º Ano</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/student.css">
+</head>
+<body>
+
+    <!-- ===== TELA 1: ESCOLHA DE TURMA ===== -->
+    <div id="screenTurma" class="screen active">
+        <!-- BG Orbs -->
+        <div class="orb orb-blue"></div>
+        <div class="orb orb-purple"></div>
+        <div class="orb orb-cyan"></div>
+
+        <div class="turma-select-wrapper">
+            <div class="app-brand">
+                <div class="brand-icon">🎓</div>
+                <h1 class="brand-title">FormandoMusix</h1>
+                <p class="brand-sub">Músicas de Formatura 2026 · 3º Ano</p>
+            </div>
+
+            <div class="select-turma-card">
+                <p class="select-label">Qual é a sua turma?</p>
+                <div class="turma-btns">
+                    <button class="turma-pick-btn" data-turma="A">
+                        <span class="turma-pick-emoji">🅰</span>
+                        <span class="turma-pick-label">3º Ano A</span>
+                        <span class="turma-pick-count" id="countA">39 formandos</span>
+                    </button>
+                    <button class="turma-pick-btn" data-turma="B">
+                        <span class="turma-pick-emoji">🅱</span>
+                        <span class="turma-pick-label">3º Ano B</span>
+                        <span class="turma-pick-count" id="countB">34 formandos</span>
+                    </button>
+                </div>
+            </div>
+
+            <a href="admin.html" class="admin-link-hint">
+                🔒 Acesso Administrativo
+            </a>
+        </div>
+    </div>
+
+    <!-- ===== TELA 2: BUSCA DO ALUNO ===== -->
+    <div id="screenSearch" class="screen">
+        <div class="orb orb-blue"></div>
+        <div class="orb orb-purple"></div>
+
+        <div class="search-screen-wrapper">
+            <div class="search-header">
+                <button id="btnBackToTurma" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div class="search-header-info">
+                    <div class="turma-pill" id="turmaPill">3º Ano A</div>
+                    <h2 class="search-screen-title">Encontre seu nome</h2>
+                </div>
+            </div>
+
+            <div class="search-input-box">
+                <svg class="search-ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="studentSearchInput" placeholder="Digite seu nome..." autocomplete="off" autocorrect="off">
+                <button class="clear-search-btn" id="clearSearchBtn" style="display:none;">✕</button>
+            </div>
+
+            <div class="students-list" id="studentsList">
+                <!-- Alunos aqui -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TELA 3: PERFIL DO ALUNO ===== -->
+    <div id="screenProfile" class="screen">
+        <div class="orb orb-blue small"></div>
+        <div class="orb orb-purple small"></div>
+
+        <div class="profile-wrapper">
+            <div class="profile-header">
+                <button id="btnBackToSearch" class="back-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div class="profile-turma-pill" id="profileTurmaPill">3º Ano A</div>
+            </div>
+
+            <div class="profile-hero">
+                <div class="profile-avatar" id="profileAvatar">J</div>
+                <h2 class="profile-name" id="profileName">Nome do Aluno</h2>
+                <div class="profile-status-badge" id="profileStatusBadge">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Pendente</span>
+                </div>
+            </div>
+
+            <!-- Se já tem música escolhida -->
+            <div class="music-chosen-card" id="musicChosenCard" style="display:none;">
+                <div class="chosen-label">🎵 Música Escolhida</div>
+                <div class="chosen-music-title" id="chosenMusicTitle">—</div>
+                <div class="chosen-music-artist" id="chosenMusicArtist">—</div>
+                <div class="chosen-snippet" id="chosenSnippet" style="display:none;">
+                    <span>⏱ Trecho:</span>
+                    <span id="chosenSnippetText">—</span>
+                </div>
+                <a class="chosen-yt-link" id="chosenYtLink" href="#" target="_blank" rel="noopener" style="display:none;">
+                    ▶ Ouvir no YouTube
+                </a>
+            </div>
+
+            <!-- Sem música ainda -->
+            <div class="no-music-card" id="noMusicCard" style="display:none;">
+                <div class="no-music-icon">🎵</div>
+                <p>Você ainda não enviou sua sugestão de música.</p>
+                <p class="no-music-hint">Use o formulário abaixo para sugerir!</p>
+            </div>
+
+            <!-- Formulário de sugestão -->
+            <div class="suggestion-card">
+                <h3 class="suggestion-title">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    Sugerir minha música
+                </h3>
+
+                <form id="suggestionForm">
+                    <div class="sug-form-group">
+                        <label>Link do YouTube *</label>
+                        <div class="sug-input-row">
+                            <input type="url" id="sugMusicLink" placeholder="https://youtube.com/watch?v=..." autocomplete="off">
+                            <button type="button" class="sug-detect-btn" id="btnDetectSong">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                Detectar
+                            </button>
+                        </div>
+                        <div class="auto-detect-info" id="autoDetectInfo" style="display:none;"></div>
+                    </div>
+
+                    <div class="sug-form-row">
+                        <div class="sug-form-group">
+                            <label>Nome da Música *</label>
+                            <input type="text" id="sugMusicTitle" placeholder="Ex: Viva La Vida" required>
+                        </div>
+                        <div class="sug-form-group">
+                            <label>Artista / Banda</label>
+                            <input type="text" id="sugMusicArtist" placeholder="Ex: Coldplay">
+                        </div>
+                    </div>
+
+                    <div class="sug-form-row">
+                        <div class="sug-form-group">
+                            <label>Início do Trecho (opcional)</label>
+                            <input type="text" id="sugSnippetStart" placeholder="Ex: 0:40 ou 40">
+                        </div>
+                        <div class="sug-form-group">
+                            <label>Fim do Trecho (opcional)</label>
+                            <input type="text" id="sugSnippetEnd" placeholder="Ex: 1:15 ou 75">
+                        </div>
+                    </div>
+
+                    <div class="sug-notice">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                        Sua sugestão será analisada pela comissão. Apenas músicas aprovadas serão confirmadas.
+                    </div>
+
+                    <div class="sug-form-actions">
+                        <button type="submit" class="btn-submit-sug" id="btnSubmitSug">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                            Enviar Sugestão
+                        </button>
+                    </div>
+
+                    <div class="sug-feedback" id="sugFeedback" style="display:none;"></div>
+                </form>
+            </div>
+
+            <div class="profile-footer-note">
+                💡 Para alterações após a aprovação, entre em contato com a comissão.
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TOAST de Notificação ===== -->
+    <div class="toast" id="toast">
+        <span class="toast-icon">✓</span>
+        <span class="toast-text" id="toastText">Mensagem</span>
+    </div>
+
+    <script src="js/student.js"></script>
+</body>
+</html>
